@@ -18,11 +18,16 @@ from google import genai
 MODEL_NAME = os.getenv("INTERVIEWIQ_MODEL", "gemini-2.5-flash")
 HOST = os.getenv("INTERVIEWIQ_HOST", "127.0.0.1")
 PORT = int(os.getenv("INTERVIEWIQ_PORT", "5000"))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_CANDIDATES = [
+    "interviewiq_frontend.html",
+    "interview_bot.html",
+]
 
 BGRADE_RE = re.compile(r"\{[\s\S]*\}")
 QUESTION_RE = re.compile(r"Question\s+(\d+)\s*[:\.\)]", re.IGNORECASE)
 
-app = Flask(__name__, static_folder="/mnt/data")
+app = Flask(__name__, static_folder=BASE_DIR)
 SESSIONS: dict[str, "InterviewSession"] = {}
 SESSIONS_LOCK = threading.Lock()
 
@@ -180,19 +185,61 @@ def build_end_turn() -> str:
     )
 
 
+
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS'
+    return response
+
+@app.route('/api/start', methods=['OPTIONS'])
+@app.route('/api/message', methods=['OPTIONS'])
+@app.route('/api/end', methods=['OPTIONS'])
+def api_preflight():
+    return ('', 204)
+
 # --------------------------------------------------
 # ROUTES
 # --------------------------------------------------
+def _find_frontend_file() -> str | None:
+    for name in FRONTEND_CANDIDATES:
+        if os.path.exists(os.path.join(BASE_DIR, name)):
+            return name
+    return None
+
+
 @app.get("/")
+@app.get("/app")
 def root():
-    if os.path.exists("/mnt/data/interviewiq_frontend.html"):
-        return send_from_directory("/mnt/data", "interviewiq_frontend.html")
-    return ok({"ok": True, "message": "Backend is running.", "model": MODEL_NAME})
+    frontend_name = _find_frontend_file()
+    if frontend_name:
+        return send_from_directory(BASE_DIR, frontend_name)
+    return ok({
+        "ok": True,
+        "message": "Backend is running, but no frontend HTML file was found next to the Python file.",
+        "model": MODEL_NAME,
+        "expected_frontend_files": FRONTEND_CANDIDATES,
+        "base_dir": BASE_DIR,
+    })
+
+
+
+
+@app.get('/debug/files')
+def debug_files():
+    return ok({
+        'ok': True,
+        'baseDir': BASE_DIR,
+        'files': sorted(os.listdir(BASE_DIR)),
+        'frontendFound': _find_frontend_file(),
+    })
 
 
 @app.get("/health")
 def health():
-    return ok({"ok": True, "model": MODEL_NAME})
+    return ok({"ok": True, "model": MODEL_NAME, "baseDir": BASE_DIR})
 
 
 @app.post("/api/start")

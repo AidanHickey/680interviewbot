@@ -7,8 +7,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
-from flask import Flask, jsonify, request, send_from_directory
-from google import genai
+
 
 
 MODEL_NAME = os.getenv("INTERVIEWIQ_MODEL", "gemini-2.5-flash")
