@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InterviewIQ — AI Interview Coach</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3f;
+    --accent: #c8a96e;
+    --accent2: #7b68ee;
+    --text: #e8e8f0;
+    --text-dim: #7a7a9a;
+    --green: #4ade80;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --glow: rgba(200,169,110,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200,169,110,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,169,110,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── SCREEN MANAGEMENT ─── */
+  .screen { display: none; flex-direction: column; height: 100vh; position: relative; z-index: 1; }
+  .screen.active { display: flex; }
+
+  /* ─── SETUP SCREEN ─── */
+  #setup-screen {
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    animation: fadeIn 0.6s ease;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+
+  .logo-area {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .logo-badge {
+    display: inline-block;
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    margin: 0 auto 16px;
+    box-shadow: 0 0 40px var(--glow);
+  }
+
+  h1.brand {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent), #fff8e7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+  }
+
+  .brand-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  .setup-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+    width: 100%;
+    max-width: 560px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .setup-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    margin-bottom: 8px;
+  }
+
+  .setup-card p {
+    color: var(--text-dim);
+    font-size: 0.875rem;
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+
+  label {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  input[type="text"], input[type="password"], select, textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.95rem;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    margin-bottom: 20px;
+    -webkit-appearance: none;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--glow);
+  }
+
+  select option { background: var(--surface2); }
+
+  textarea { resize: vertical; min-height: 90px; }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), #d4b07a);
+    color: #0a0a0f;
+    border: none;
+    border-radius: 10px;
+    padding: 14px 24px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+  }
+
+  .btn-primary:hover { opacity: 0.9; box-shadow: 0 4px 20px var(--glow); }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ─── INTERVIEW SCREEN ─── */
+  #interview-screen { flex-direction: column; }
+
+  .interview-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .header-left { display: flex; align-items: center; gap: 12px; }
+
+  .header-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .interview-meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .progress-area { display: flex; align-items: center; gap: 12px; }
+
+  .q-counter {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .progress-dots { display: flex; gap: 5px; }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.3s;
+  }
+  .dot.done { background: var(--accent); }
+  .dot.active { background: var(--accent); animation: pulse 1.2s infinite; }
+
+  .btn-end {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .btn-end:hover { border-color: var(--red); color: var(--red); }
+
+  /* Chat */
+  .chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    scroll-behavior: smooth;
+  }
+
+  .chat-area::-webkit-scrollbar { width: 4px; }
+  .chat-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .msg {
+    display: flex;
+    gap: 14px;
+    animation: slideIn 0.35s ease;
+    max-width: 820px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .msg.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .avatar.ai {
+    background: linear-gradient(135deg, var(--accent2), #9b8fd4);
+    box-shadow: 0 0 16px rgba(123,104,238,0.3);
+  }
+
+  .avatar.user-av {
+    background: linear-gradient(135deg, #2a2a3f, #3a3a55);
+    border: 1px solid var(--border);
+  }
+
+  .bubble {
+    max-width: calc(100% - 50px);
+    padding: 14px 18px;
+    border-radius: 14px;
+    font-size: 0.92rem;
+    line-height: 1.65;
+  }
+
+  .msg.ai .bubble {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top-left-radius: 4px;
+  }
+
+  .msg.user .bubble {
+    background: linear-gradient(135deg, #1e1e35, #252540);
+    border: 1px solid #3a3a5a;
+    border-top-right-radius: 4px;
+    color: var(--text);
+  }
+
+  .typing-indicator {
+    display: flex; gap: 5px; align-items: center; padding: 6px 0;
+  }
+
+  .typing-dot {
+    width: 7px; height: 7px;
+    background: var(--text-dim);
+    border-radius: 50%;
+    animation: pulse 1.2s infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  /* Input */
+  .input-area {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 16px 20px;
+    flex-shrink: 0;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    max-width: 820px;
+    margin: 0 auto;
+    align-items: flex-end;
+  }
+
+  .input-wrap {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    align-items: flex-end;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    padding: 4px 4px 4px 16px;
+  }
+
+  .input-wrap:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--glow);
+  }
+
+  #user-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.92rem;
+    resize: none;
+    max-height: 120px;
+    min-height: 42px;
+    padding: 10px 0;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .send-btn {
+    background: linear-gradient(135deg, var(--accent), #d4b07a);
+    border: none;
+    border-radius: 9px;
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    flex-shrink: 0;
+    margin: 3px;
+  }
+
+  .send-btn:hover { opacity: 0.85; }
+  .send-btn:active { transform: scale(0.93); }
+  .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .send-btn svg { width: 18px; height: 18px; fill: #0a0a0f; }
+
+  .input-hint {
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin-top: 8px;
+    opacity: 0.6;
+  }
+
+  /* ─── RESULTS SCREEN ─── */
+  #results-screen {
+    overflow-y: auto;
+    padding: 40px 20px;
+    align-items: center;
+    animation: fadeIn 0.6s ease;
+  }
+
+  .results-inner {
+    width: 100%;
+    max-width: 700px;
+  }
+
+  .results-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .results-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-weight: 900;
+    margin-bottom: 8px;
+  }
+
+  .results-header p {
+    color: var(--text-dim);
+    font-size: 0.875rem;
+  }
+
+  /* Score ring */
+  .score-ring-area {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 36px;
+  }
+
+  .score-ring-wrap {
+    position: relative;
+    width: 160px; height: 160px;
+  }
+
+  .score-ring-wrap svg {
+    transform: rotate(-90deg);
+    width: 160px; height: 160px;
+  }
+
+  .score-ring-bg { fill: none; stroke: var(--border); stroke-width: 10; }
+  .score-ring-fill {
+    fill: none;
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke-dasharray: 440;
+    stroke-dashoffset: 440;
+    transition: stroke-dashoffset 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .score-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .score-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.8rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .score-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* Grade badge */
+  .grade-badge {
+    display: inline-block;
+    padding: 6px 20px;
+    border-radius: 100px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 10px;
+  }
+
+  .grade-A { background: rgba(74,222,128,0.15); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
+  .grade-B { background: rgba(200,169,110,0.15); color: var(--accent); border: 1px solid rgba(200,169,110,0.3); }
+  .grade-C { background: rgba(251,191,36,0.15); color: var(--yellow); border: 1px solid rgba(251,191,36,0.3); }
+  .grade-D { background: rgba(248,113,113,0.15); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+
+  /* Category scores */
+  .categories-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 500px) { .categories-grid { grid-template-columns: 1fr; } }
+
+  .cat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .cat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .cat-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .cat-score {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  .cat-bar-bg {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .cat-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Feedback sections */
+  .feedback-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    margin-bottom: 16px;
+  }
+
+  .feedback-section h3 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .feedback-icon { font-size: 14px; }
+
+  .feedback-section ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .feedback-section li {
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: var(--text);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .feedback-section li::before {
+    content: '▸';
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .summary-text {
+    font-size: 0.92rem;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  .btn-restart {
+    width: 100%;
+    margin-top: 24px;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 10px;
+    padding: 13px 24px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .btn-restart:hover {
+    background: var(--accent);
+    color: #0a0a0f;
+  }
+
+  /* Loading overlay */
+  #loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,15,0.8);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  #loading-overlay.show { display: flex; }
+
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* API key note */
+  .api-note {
+    background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.78rem;
+    color: var(--accent);
+    margin-bottom: 20px;
+    line-height: 1.5;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  #error-msg {
+    color: var(--red);
+    font-size: 0.8rem;
+    font-family: 'IBM Plex Mono', monospace;
+    margin-top: -12px;
+    margin-bottom: 12px;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Thinking...</div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN 1: SETUP
+═══════════════════════════════════════ -->
+<div id="setup-screen" class="screen active">
+  <div class="logo-area">
+    <div class="logo-badge">🎯</div>
+    <h1 class="brand">InterviewIQ</h1>
+    <div class="brand-sub">AI-Powered Interview Coach</div>
+  </div>
+
+  <div class="setup-card">
+    <h2>Configure Your Interview</h2>
+    <p>Set up your mock interview session. The AI will ask role-specific questions and grade your performance in detail.</p>
+
+    <div class="api-note">
+      🔑 Your Anthropic API key is required. It stays in your browser and is never stored.
+    </div>
+
+    <label for="api-key">Anthropic API Key</label>
+    <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off">
+
+    <label for="job-title">Job Title / Role</label>
+    <input type="text" id="job-title" placeholder="e.g. Senior Software Engineer" value="">
+
+    <div class="field-row">
+      <div>
+        <label for="industry">Industry</label>
+        <select id="industry">
+          <option value="Technology">Technology</option>
+          <option value="Finance">Finance</option>
+          <option value="Healthcare">Healthcare</option>
+          <option value="Marketing">Marketing</option>
+          <option value="Education">Education</option>
+          <option value="Consulting">Consulting</option>
+          <option value="Sales">Sales</option>
+          <option value="Design">Design / UX</option>
+          <option value="Operations">Operations</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div>
+        <label for="difficulty">Interview Level</label>
+        <select id="difficulty">
+          <option value="entry-level">Entry Level</option>
+          <option value="mid-level" selected>Mid Level</option>
+          <option value="senior">Senior</option>
+          <option value="executive">Executive</option>
+        </select>
+      </div>
+    </div>
+
+    <label for="num-questions">Number of Questions</label>
+    <select id="num-questions">
+      <option value="3">3 — Quick Session (5 min)</option>
+      <option value="5" selected>5 — Standard Session (10 min)</option>
+      <option value="8">8 — Deep Dive (15 min)</option>
+      <option value="10">10 — Full Interview (20 min)</option>
+    </select>
+
+    <label for="focus-area">Focus Areas (optional)</label>
+    <textarea id="focus-area" placeholder="e.g. system design, leadership experience, conflict resolution, technical skills..."></textarea>
+
+    <div id="error-msg"></div>
+
+    <button class="btn-primary" id="start-btn" onclick="startInterview()">
+      Begin Interview →
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN 2: INTERVIEW
+═══════════════════════════════════════ -->
+<div id="interview-screen" class="screen">
+  <div class="interview-header">
+    <div class="header-left">
+      <span style="font-size:20px">🎯</span>
+      <div>
+        <div class="header-brand">InterviewIQ</div>
+        <div class="interview-meta" id="interview-meta">Loading...</div>
+      </div>
+    </div>
+    <div class="progress-area">
+      <span class="q-counter" id="q-counter">0 / 0</span>
+      <div class="progress-dots" id="progress-dots"></div>
+    </div>
+    <button class="btn-end" onclick="endInterviewEarly()">End & Grade</button>
+  </div>
+
+  <div class="chat-area" id="chat-area"></div>
+
+  <div class="input-area">
+    <div class="input-row">
+      <div class="input-wrap">
+        <textarea id="user-input" rows="1" placeholder="Type your answer here..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      </div>
+      <button class="send-btn" id="send-btn" onclick="sendMessage()" title="Send (Enter)">
+        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+    <div class="input-hint">Press Enter to send · Shift+Enter for new line</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN 3: RESULTS
+═══════════════════════════════════════ -->
+<div id="results-screen" class="screen">
+  <div class="results-inner">
+    <div class="results-header">
+      <h2 id="results-title">Interview Complete</h2>
+      <p id="results-subtitle">Here's your detailed performance breakdown</p>
+    </div>
+
+    <div class="score-ring-area">
+      <div class="score-ring-wrap">
+        <svg viewBox="0 0 160 160">
+          <circle class="score-ring-bg" cx="80" cy="80" r="70"/>
+          <circle class="score-ring-fill" id="ring-fill" cx="80" cy="80" r="70"/>
+        </svg>
+        <div class="score-center">
+          <div class="score-num" id="score-display">—</div>
+          <div class="score-label">/ 100</div>
+          <div class="grade-badge" id="grade-badge">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="categories-grid" id="categories-grid"></div>
+
+    <div class="feedback-section" id="summary-section">
+      <h3><span class="feedback-icon">📋</span> Overall Summary</h3>
+      <p class="summary-text" id="summary-text">Loading...</p>
+    </div>
+
+    <div class="feedback-section" id="strengths-section">
+      <h3><span class="feedback-icon">✅</span> Strengths</h3>
+      <ul id="strengths-list"></ul>
+    </div>
+
+    <div class="feedback-section" id="improvements-section">
+      <h3><span class="feedback-icon">🎯</span> Areas for Improvement</h3>
+      <ul id="improvements-list"></ul>
+    </div>
+
+    <div class="feedback-section" id="tips-section">
+      <h3><span class="feedback-icon">💡</span> Actionable Tips</h3>
+      <ul id="tips-list"></ul>
+    </div>
+
+    <button class="btn-restart" onclick="restartInterview()">← Start New Interview</button>
+  </div>
+</div>
+
+<script>
+// ──────────────────────────────────────
+// STATE
+// ──────────────────────────────────────
+let state = {
+  apiKey: '',
+  jobTitle: '',
+  industry: '',
+  difficulty: '',
+  numQuestions: 5,
+  focusArea: '',
+  conversationHistory: [],
+  questionCount: 0,
+  isTyping: false,
+  interviewActive: false,
+};
+
+// ──────────────────────────────────────
+// SCREEN MANAGEMENT
+// ──────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ──────────────────────────────────────
+// START INTERVIEW
+// ──────────────────────────────────────
+async function startInterview() {
+  const apiKey   = document.getElementById('api-key').value.trim();
+  const jobTitle = document.getElementById('job-title').value.trim();
+  const errEl = document.getElementById('error-msg');
+
+  if (!apiKey) { showError('Please enter your Anthropic API key.'); return; }
+  if (!jobTitle) { showError('Please enter a job title.'); return; }
+  errEl.style.display = 'none';
+
+  state.apiKey      = apiKey;
+  state.jobTitle    = jobTitle;
+  state.industry    = document.getElementById('industry').value;
+  state.difficulty  = document.getElementById('difficulty').value;
+  state.numQuestions = parseInt(document.getElementById('num-questions').value);
+  state.focusArea   = document.getElementById('focus-area').value.trim();
+  state.conversationHistory = [];
+  state.questionCount = 0;
+  state.interviewActive = true;
+
+  // Build UI
+  document.getElementById('interview-meta').textContent =
+    `${state.jobTitle} · ${state.industry} · ${state.difficulty}`;
+  document.getElementById('q-counter').textContent = `0 / ${state.numQuestions}`;
+  buildProgressDots();
+  document.getElementById('chat-area').innerHTML = '';
+
+  showScreen('interview-screen');
+
+  // System prompt
+  const systemPrompt = buildSystemPrompt();
+  state.conversationHistory.push({
+    role: 'user',
+    content: `[SYSTEM CONTEXT — DO NOT REPEAT THIS TO THE USER]\n${systemPrompt}\n\nPlease begin the interview with a brief, warm professional greeting (2-3 sentences max), then ask the first interview question. Number each question clearly (e.g. "Question 1:").`
+  });
+
+  await sendToAI(true);
+}
+
+function buildSystemPrompt() {
+  const focusPart = state.focusArea
+    ? `Focus areas requested by the candidate: ${state.focusArea}.`
+    : '';
+  return `You are an expert senior interviewer at a top-tier ${state.industry} company conducting a ${state.difficulty} interview for the position of ${state.jobTitle}.
+
+Your job:
+1. Ask exactly ${state.numQuestions} thoughtful, realistic interview questions appropriate for the role and level.
+2. After EACH answer, give brief (1-2 sentence) acknowledgment/follow-up if needed, then move to the next question.
+3. Keep questions varied: mix behavioral (STAR method), technical/situational, and role-specific questions.
+4. After the ${state.numQuestions}th answer, write EXACTLY this line: "END_INTERVIEW" (nothing else on that line) then provide a JSON grading block.
+
+${focusPart}
+
+GRADING FORMAT (after END_INTERVIEW, provide valid JSON only, no markdown backticks):
+{
+  "overall_score": <number 0-100>,
+  "grade": "<A/B/C/D>",
+  "grade_label": "<Exceptional/Good/Adequate/Needs Improvement>",
+  "categories": {
+    "Communication": <0-100>,
+    "Relevance": <0-100>,
+    "Depth": <0-100>,
+    "Confidence": <0-100>,
+    "Problem Solving": <0-100>
+  },
+  "summary": "<2-3 sentence overall summary>",
+  "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
+  "improvements": ["<area 1>", "<area 2>", "<area 3>"],
+  "tips": ["<actionable tip 1>", "<actionable tip 2>", "<actionable tip 3>"]
+}`;
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// ──────────────────────────────────────
+// CHAT UI HELPERS
+// ──────────────────────────────────────
+function buildProgressDots() {
+  const container = document.getElementById('progress-dots');
+  container.innerHTML = '';
+  for (let i = 0; i < state.numQuestions; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.id = `dot-${i}`;
+    container.appendChild(dot);
+  }
+}
+
+function updateProgress() {
+  document.getElementById('q-counter').textContent =
+    `${state.questionCount} / ${state.numQuestions}`;
+  for (let i = 0; i < state.numQuestions; i++) {
+    const dot = document.getElementById(`dot-${i}`);
+    if (!dot) continue;
+    if (i < state.questionCount) dot.className = 'dot done';
+    else if (i === state.questionCount) dot.className = 'dot active';
+    else dot.className = 'dot';
+  }
+}
+
+function addMessage(role, text) {
+  const chat = document.getElementById('chat-area');
+  const msg = document.createElement('div');
+  msg.className = `msg ${role === 'assistant' ? 'ai' : 'user'}`;
+
+  const avatar = document.createElement('div');
+  avatar.className = `avatar ${role === 'assistant' ? 'ai' : 'user-av'}`;
+  avatar.textContent = role === 'assistant' ? '🤖' : '👤';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.textContent = text;
+
+  msg.appendChild(avatar);
+  msg.appendChild(bubble);
+  chat.appendChild(msg);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping() {
+  const chat = document.getElementById('chat-area');
+  const msg = document.createElement('div');
+  msg.className = 'msg ai';
+  msg.id = 'typing-msg';
+
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar ai';
+  avatar.textContent = '🤖';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.innerHTML = '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+
+  msg.appendChild(avatar);
+  msg.appendChild(bubble);
+  chat.appendChild(msg);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typing-msg');
+  if (el) el.remove();
+}
+
+// ──────────────────────────────────────
+// SEND USER MESSAGE
+// ──────────────────────────────────────
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+async function sendMessage() {
+  const input = document.getElementById('user-input');
+  const text = input.value.trim();
+  if (!text || state.isTyping) return;
+
+  addMessage('user', text);
+  input.value = '';
+  input.style.height = 'auto';
+
+  state.conversationHistory.push({ role: 'user', content: text });
+
+  await sendToAI(false);
+}
+
+// ──────────────────────────────────────
+// API CALL
+// ──────────────────────────────────────
+async function sendToAI(isInitial) {
+  state.isTyping = true;
+  setInputEnabled(false);
+  showTyping();
+
+  try {
+    const messages = isInitial
+      ? state.conversationHistory
+      : state.conversationHistory;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': state.apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1200,
+        messages: messages,
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `API error ${res.status}`);
+    }
+
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || '';
+
+    removeTyping();
+
+    // Check for END_INTERVIEW
+    if (reply.includes('END_INTERVIEW')) {
+      const parts = reply.split('END_INTERVIEW');
+      const beforeEnd = parts[0].trim();
+      const afterEnd = parts[1] || '';
+
+      if (beforeEnd) addMessage('assistant', beforeEnd);
+
+      state.conversationHistory.push({ role: 'assistant', content: reply });
+      state.interviewActive = false;
+
+      // Parse JSON grading
+      const jsonMatch = afterEnd.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          const grading = JSON.parse(jsonMatch[0]);
+          setTimeout(() => showResults(grading), 800);
+        } catch(e) {
+          addMessage('assistant', 'Interview complete! Unable to parse detailed grading. Please try again.');
+        }
+      }
+    } else {
+      // Count questions asked
+      const qMatches = reply.match(/Question\s+\d+[:\.\)]/gi);
+      if (qMatches) {
+        state.questionCount = Math.min(state.questionCount + 1, state.numQuestions);
+        updateProgress();
+      }
+
+      addMessage('assistant', reply);
+      state.conversationHistory.push({ role: 'assistant', content: reply });
+      setInputEnabled(true);
+    }
+  } catch (err) {
+    removeTyping();
+    addMessage('assistant', `⚠️ Error: ${err.message}. Please check your API key and try again.`);
+    setInputEnabled(true);
+  }
+
+  state.isTyping = false;
+}
+
+function setInputEnabled(enabled) {
+  document.getElementById('user-input').disabled = !enabled;
+  document.getElementById('send-btn').disabled = !enabled;
+}
+
+async function endInterviewEarly() {
+  if (!confirm('End the interview now and get your grade?')) return;
+
+  state.conversationHistory.push({
+    role: 'user',
+    content: 'Please end the interview now and provide your full grading assessment as described in the instructions (with END_INTERVIEW marker and JSON).'
+  });
+
+  await sendToAI(false);
+}
+
+// ──────────────────────────────────────
+// RESULTS
+// ──────────────────────────────────────
+function showResults(grading) {
+  showScreen('results-screen');
+
+  const score = grading.overall_score || 0;
+  const grade = grading.grade || 'C';
+  const gradeLabel = grading.grade_label || 'Adequate';
+
+  // Title
+  document.getElementById('results-title').textContent =
+    `${state.jobTitle} Interview`;
+  document.getElementById('results-subtitle').textContent =
+    `${state.difficulty} · ${state.industry} · ${state.numQuestions} questions`;
+
+  // Score ring animation
+  const scoreEl = document.getElementById('score-display');
+  scoreEl.textContent = score;
+
+  const gradeColors = { A: '#4ade80', B: '#c8a96e', C: '#fbbf24', D: '#f87171' };
+  const color = gradeColors[grade] || '#c8a96e';
+
+  const ring = document.getElementById('ring-fill');
+  ring.style.stroke = color;
+  const circumference = 2 * Math.PI * 70; // r=70
+  ring.style.strokeDasharray = circumference;
+  ring.style.strokeDashoffset = circumference;
+  setTimeout(() => {
+    ring.style.strokeDashoffset = circumference * (1 - score / 100);
+  }, 100);
+
+  // Grade badge
+  const badge = document.getElementById('grade-badge');
+  badge.textContent = `${grade} — ${gradeLabel}`;
+  badge.className = `grade-badge grade-${grade}`;
+  scoreEl.style.color = color;
+
+  // Category cards
+  const catGrid = document.getElementById('categories-grid');
+  catGrid.innerHTML = '';
+  const categories = grading.categories || {};
+  const catColors = {
+    'Communication': '#7b68ee',
+    'Relevance': '#4ade80',
+    'Depth': '#c8a96e',
+    'Confidence': '#60a5fa',
+    'Problem Solving': '#f472b6'
+  };
+
+  Object.entries(categories).forEach(([name, val]) => {
+    const c = catColors[name] || '#c8a96e';
+    const card = document.createElement('div');
+    card.className = 'cat-card';
+    card.innerHTML = `
+      <div class="cat-header">
+        <span class="cat-name">${name}</span>
+        <span class="cat-score" style="color:${c}">${val}</span>
+      </div>
+      <div class="cat-bar-bg">
+        <div class="cat-bar-fill" id="bar-${name.replace(/\s/g,'')}" style="background:${c};width:0%"></div>
+      </div>`;
+    catGrid.appendChild(card);
+    setTimeout(() => {
+      const bar = document.getElementById(`bar-${name.replace(/\s/g,'')}`);
+      if (bar) bar.style.width = val + '%';
+    }, 200);
+  });
+
+  // Summary
+  document.getElementById('summary-text').textContent = grading.summary || '';
+
+  // Strengths
+  const sl = document.getElementById('strengths-list');
+  sl.innerHTML = '';
+  (grading.strengths || []).forEach(s => {
+    const li = document.createElement('li');
+    li.textContent = s;
+    sl.appendChild(li);
+  });
+
+  // Improvements
+  const il = document.getElementById('improvements-list');
+  il.innerHTML = '';
+  (grading.improvements || []).forEach(s => {
+    const li = document.createElement('li');
+    li.textContent = s;
+    il.appendChild(li);
+  });
+
+  // Tips
+  const tl = document.getElementById('tips-list');
+  tl.innerHTML = '';
+  (grading.tips || []).forEach(s => {
+    const li = document.createElement('li');
+    li.textContent = s;
+    tl.appendChild(li);
+  });
+
+  document.getElementById('results-screen').scrollTop = 0;
+}
+
+// ──────────────────────────────────────
+// RESTART
+// ──────────────────────────────────────
+function restartInterview() {
+  state = {
+    apiKey: state.apiKey,
+    jobTitle: '',
+    industry: '',
+    difficulty: '',
+    numQuestions: 5,
+    focusArea: '',
+    conversationHistory: [],
+    questionCount: 0,
+    isTyping: false,
+    interviewActive: false,
+  };
+  document.getElementById('job-title').value = '';
+  document.getElementById('focus-area').value = '';
+  document.getElementById('error-msg').style.display = 'none';
+  showScreen('setup-screen');
+}
+</script>
+</body>
+</html>
