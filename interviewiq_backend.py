@@ -48,6 +48,7 @@ class InterviewSession:
     conversation: list[InterviewMessage] = field(default_factory=list)
     system_prompt: str = ""
     question_count: int = 0
+    answers_received: int = 0
     grading: dict[str, Any] | None = None
     complete: bool = False
 
@@ -87,28 +88,67 @@ Your instructions:
 2. After each candidate answer, give a brief (1-2 sentence) acknowledgment or follow-up if needed, then ask the next question.
 3. Vary question types: behavioral (STAR method), situational, technical/role-specific.
 4. Number each question clearly, e.g. \"Question 1:\".
-5. After the candidate answers the {num_questions}th question, write EXACTLY this line alone: END_INTERVIEW
-   Then immediately output a JSON grading block (no markdown, no backticks).
+5. Never ask more than one numbered question in a single response.
+6. Do not write END_INTERVIEW or any grading unless the system explicitly asks you to do grading.
 
 {focus}
+"""
 
-JSON grading format (output this right after END_INTERVIEW, valid JSON only):
+
+def build_initial_turn(system_prompt: str) -> str:
+    return (
+        f"[INTERVIEW CONTEXT]\n{system_prompt}\n\n"
+        "Begin with a brief professional greeting (2-3 sentences), then ask exactly one question labeled Question 1:. "
+        "Do not ask more than one numbered question. Do not include grading."
+    )
+
+
+def build_next_turn_instruction(answered_count: int, total_q: int) -> str:
+    next_q = answered_count + 1
+    return (
+        f"[CONTROL]\nThe candidate has answered {answered_count} out of {total_q} questions so far. "
+        f"Respond with a brief acknowledgment (1-2 sentences), then ask exactly one new question labeled Question {next_q}:. "
+        "Do not ask multiple numbered questions. Do not write END_INTERVIEW. Do not provide grading JSON."
+    )
+
+
+def build_grading_prompt(session: InterviewSession) -> str:
+    transcript_lines: list[str] = []
+    for message in session.conversation:
+        if message.role == "user" and message.text.startswith("[INTERVIEW CONTEXT]"):
+            continue
+        speaker = "Candidate" if message.role == "user" else "Interviewer"
+        transcript_lines.append(f"{speaker}: {message.text}")
+
+    transcript = "\n\n".join(transcript_lines).strip()
+    if not transcript:
+        transcript = "No interview transcript available."
+
+    return f"""You are evaluating a mock job interview transcript.
+
+Return EXACTLY:
+1. A line containing only END_INTERVIEW
+2. A valid JSON object with this exact structure and no markdown:
 {{
-  \"overall_score\": <integer 0-100>,
-  \"grade\": \"<A|B|C|D>\",
-  \"grade_label\": \"<Exceptional|Good|Adequate|Needs Improvement>\",
-  \"categories\": {{
-    \"Communication\": <0-100>,
-    \"Relevance\": <0-100>,
-    \"Depth\": <0-100>,
-    \"Confidence\": <0-100>,
-    \"Problem Solving\": <0-100>
+  "overall_score": <integer 0-100>,
+  "grade": "<A|B|C|D>",
+  "grade_label": "<Exceptional|Good|Adequate|Needs Improvement>",
+  "categories": {{
+    "Communication": <0-100>,
+    "Relevance": <0-100>,
+    "Depth": <0-100>,
+    "Confidence": <0-100>,
+    "Problem Solving": <0-100>
   }},
-  \"summary\": \"<2-3 sentence overall summary>\",
-  \"strengths\": [\"<strength 1>\", \"<strength 2>\", \"<strength 3>\"],
-  \"improvements\": [\"<area 1>\", \"<area 2>\", \"<area 3>\"],
-  \"tips\": [\"<actionable tip 1>\", \"<actionable tip 2>\", \"<actionable tip 3>\"]
-}}"""
+  "summary": "<2-3 sentence overall summary>",
+  "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
+  "improvements": ["<area 1>", "<area 2>", "<area 3>"],
+  "tips": ["<actionable tip 1>", "<actionable tip 2>", "<actionable tip 3>"]
+}}
+
+Transcript:
+{transcript}
+"""
 
 
 def parse_grading(text: str) -> dict[str, Any] | None:
@@ -126,35 +166,21 @@ def sanitize_grading(grading: dict[str, Any] | None) -> dict[str, Any] | None:
         return None
     categories = grading.get("categories") or {}
     return {
-        "overall_score": int(grading.get("overall_score", 0)),
+        "overall_score": max(0, min(100, int(grading.get("overall_score", 0)))),
         "grade": str(grading.get("grade", "C")),
         "grade_label": str(grading.get("grade_label", "Adequate")),
         "categories": {
-            "Communication": int(categories.get("Communication", 0)),
-            "Relevance": int(categories.get("Relevance", 0)),
-            "Depth": int(categories.get("Depth", 0)),
-            "Confidence": int(categories.get("Confidence", 0)),
-            "Problem Solving": int(categories.get("Problem Solving", 0)),
+            "Communication": max(0, min(100, int(categories.get("Communication", 0)))),
+            "Relevance": max(0, min(100, int(categories.get("Relevance", 0)))),
+            "Depth": max(0, min(100, int(categories.get("Depth", 0)))),
+            "Confidence": max(0, min(100, int(categories.get("Confidence", 0)))),
+            "Problem Solving": max(0, min(100, int(categories.get("Problem Solving", 0)))),
         },
         "summary": str(grading.get("summary", "")),
-        "strengths": list(grading.get("strengths", []))[:3],
-        "improvements": list(grading.get("improvements", []))[:3],
-        "tips": list(grading.get("tips", []))[:3],
+        "strengths": [str(x) for x in list(grading.get("strengths", []))[:3]],
+        "improvements": [str(x) for x in list(grading.get("improvements", []))[:3]],
+        "tips": [str(x) for x in list(grading.get("tips", []))[:3]],
     }
-
-
-def build_initial_turn(system_prompt: str) -> str:
-    return (
-        f"[INTERVIEW CONTEXT]\n{system_prompt}\n\n"
-        "Begin with a brief professional greeting (2-3 sentences), then ask Question 1."
-    )
-
-
-def build_end_turn() -> str:
-    return (
-        "Please end the interview now. Provide the full grading assessment exactly as specified - "
-        "write END_INTERVIEW on its own line, then the JSON block."
-    )
 
 
 def to_gemini_contents(conversation: list[InterviewMessage]) -> list[types.Content]:
@@ -170,8 +196,12 @@ def to_gemini_contents(conversation: list[InterviewMessage]) -> list[types.Conte
     return contents
 
 
-def call_gemini(api_key: str, conversation: list[InterviewMessage]) -> str:
-    contents = to_gemini_contents(conversation)
+def call_gemini(api_key: str, conversation: list[InterviewMessage], extra_instruction: str | None = None) -> str:
+    messages = list(conversation)
+    if extra_instruction:
+        messages.append(InterviewMessage(role="user", text=extra_instruction))
+
+    contents = to_gemini_contents(messages)
     with genai.Client(api_key=api_key) as client:
         response = client.models.generate_content(
             model=MODEL_NAME,
@@ -183,13 +213,63 @@ def call_gemini(api_key: str, conversation: list[InterviewMessage]) -> str:
     return text
 
 
-def update_question_count(current_count: int, reply: str, total_q: int) -> int:
-    matches = QUESTION_RE.findall(reply)
-    if matches:
-        return min(max(int(m) for m in matches), total_q)
+def sanitize_single_question_reply(reply: str, expected_question_number: int) -> str:
+    text = reply.strip()
+    if "END_INTERVIEW" in text:
+        text = text.split("END_INTERVIEW", 1)[0].strip()
+
+    matches = list(QUESTION_RE.finditer(text))
+    if not matches:
+        return text
+
+    first = matches[0]
+    second = matches[1] if len(matches) > 1 else None
+    trimmed = text[: second.start()].rstrip() if second else text
+    normalized = QUESTION_RE.sub(f"Question {expected_question_number}:", trimmed, count=1)
+    return normalized.strip()
+
+
+def has_exactly_one_question(reply: str) -> bool:
+    return len(QUESTION_RE.findall(reply)) == 1 and "END_INTERVIEW" not in reply
+
+
+def generate_question_turn(session: InterviewSession, answered_count: int) -> str:
+    expected_question_number = answered_count + 1
+    instruction = build_next_turn_instruction(answered_count, session.num_questions)
+    reply = call_gemini(session.api_key, session.conversation, extra_instruction=instruction)
+    cleaned = sanitize_single_question_reply(reply, expected_question_number)
+
+    if has_exactly_one_question(cleaned):
+        return cleaned
+
+    retry_instruction = (
+        f"[CORRECTION]\nYour previous answer did not follow instructions. "
+        f"Reply again with a brief acknowledgment and exactly one question labeled Question {expected_question_number}:. "
+        "No grading. No END_INTERVIEW. No extra numbered questions."
+    )
+    retry_reply = call_gemini(session.api_key, session.conversation, extra_instruction=retry_instruction)
+    retry_cleaned = sanitize_single_question_reply(retry_reply, expected_question_number)
+
+    if has_exactly_one_question(retry_cleaned):
+        return retry_cleaned
+
+    return f"Thanks for that answer. Question {expected_question_number}: Can you walk me through a specific example that best demonstrates your fit for this role?"
+
+
+def generate_grading(session: InterviewSession) -> tuple[str, dict[str, Any] | None]:
+    grading_prompt = build_grading_prompt(session)
+    reply = call_gemini(session.api_key, [InterviewMessage(role="user", text=grading_prompt)])
+    grading = None
+    reply_text = reply
+
     if "END_INTERVIEW" in reply:
-        return total_q
-    return current_count
+        before, after = reply.split("END_INTERVIEW", 1)
+        reply_text = before.strip()
+        grading = sanitize_grading(parse_grading(after))
+    if not grading:
+        grading = sanitize_grading(parse_grading(reply))
+
+    return reply_text, grading
 
 
 @app.after_request
@@ -271,22 +351,12 @@ def start_interview():
     session.conversation.append(InterviewMessage(role="user", text=build_initial_turn(system_prompt)))
 
     try:
-        reply = call_gemini(session.api_key, session.conversation)
+        reply = generate_question_turn(session, answered_count=0)
     except Exception as exc:
         return err(f"Gemini request failed: {exc}", status=502, code="provider_error")
 
     session.conversation.append(InterviewMessage(role="model", text=reply))
-    session.question_count = update_question_count(0, reply, session.num_questions)
-
-    grading = None
-    reply_text = reply
-    if "END_INTERVIEW" in reply:
-        before, after = reply.split("END_INTERVIEW", 1)
-        reply_text = before.strip()
-        grading = sanitize_grading(parse_grading(after))
-        session.complete = grading is not None
-        session.question_count = session.num_questions
-        session.grading = grading
+    session.question_count = 1
 
     with SESSIONS_LOCK:
         SESSIONS[session.session_id] = session
@@ -295,9 +365,9 @@ def start_interview():
         {
             "ok": True,
             "sessionId": session.session_id,
-            "reply": reply_text,
-            "done": session.complete,
-            "grading": session.grading,
+            "reply": reply,
+            "done": False,
+            "grading": None,
             "questionCount": session.question_count,
             "numQuestions": session.num_questions,
             "meta": session.meta,
@@ -325,34 +395,49 @@ def send_message():
         return err("This interview is already complete.", code="session_complete")
 
     session.conversation.append(InterviewMessage(role="user", text=message))
+    session.answers_received += 1
+
+    if session.answers_received >= session.num_questions:
+        try:
+            reply_text, grading = generate_grading(session)
+        except Exception as exc:
+            return err(f"Gemini request failed: {exc}", status=502, code="provider_error")
+
+        if not grading:
+            return err(
+                "Interview completed, but grading JSON could not be parsed.",
+                status=502,
+                code="grading_parse_failed",
+            )
+
+        session.complete = True
+        session.question_count = session.num_questions
+        session.grading = grading
+        return ok(
+            {
+                "ok": True,
+                "reply": reply_text,
+                "done": True,
+                "grading": grading,
+                "questionCount": session.question_count,
+                "numQuestions": session.num_questions,
+            }
+        )
 
     try:
-        reply = call_gemini(session.api_key, session.conversation)
+        reply = generate_question_turn(session, answered_count=session.answers_received)
     except Exception as exc:
         return err(f"Gemini request failed: {exc}", status=502, code="provider_error")
 
     session.conversation.append(InterviewMessage(role="model", text=reply))
-    session.question_count = update_question_count(session.question_count, reply, session.num_questions)
-
-    grading = None
-    reply_text = reply
-    done = False
-
-    if "END_INTERVIEW" in reply:
-        before, after = reply.split("END_INTERVIEW", 1)
-        reply_text = before.strip()
-        grading = sanitize_grading(parse_grading(after))
-        done = grading is not None
-        session.complete = done
-        session.question_count = session.num_questions if done else session.question_count
-        session.grading = grading
+    session.question_count = session.answers_received + 1
 
     return ok(
         {
             "ok": True,
-            "reply": reply_text,
-            "done": done,
-            "grading": grading,
+            "reply": reply,
+            "done": False,
+            "grading": None,
             "questionCount": session.question_count,
             "numQuestions": session.num_questions,
         }
@@ -375,23 +460,10 @@ def end_interview():
     if session.complete:
         return ok({"ok": True, "done": True, "grading": session.grading, "reply": ""})
 
-    session.conversation.append(InterviewMessage(role="user", text=build_end_turn()))
-
     try:
-        reply = call_gemini(session.api_key, session.conversation)
+        reply_text, grading = generate_grading(session)
     except Exception as exc:
         return err(f"Gemini request failed: {exc}", status=502, code="provider_error")
-
-    session.conversation.append(InterviewMessage(role="model", text=reply))
-
-    reply_text = reply
-    grading = None
-    if "END_INTERVIEW" in reply:
-        before, after = reply.split("END_INTERVIEW", 1)
-        reply_text = before.strip()
-        grading = sanitize_grading(parse_grading(after))
-    else:
-        grading = sanitize_grading(parse_grading(reply))
 
     if not grading:
         return err(
@@ -401,7 +473,7 @@ def end_interview():
         )
 
     session.complete = True
-    session.question_count = session.num_questions
+    session.question_count = min(session.question_count, session.num_questions)
     session.grading = grading
 
     return ok({"ok": True, "done": True, "reply": reply_text, "grading": grading})
