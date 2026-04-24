@@ -10,11 +10,9 @@ from typing import Any
 
 from flask import Flask, jsonify, request, send_from_directory
 from google import genai
+from google.genai import types
 
 
-# --------------------------------------------------
-# CONFIG
-# --------------------------------------------------
 MODEL_NAME = os.getenv("INTERVIEWIQ_MODEL", "gemini-2.5-flash")
 HOST = os.getenv("INTERVIEWIQ_HOST", "127.0.0.1")
 PORT = int(os.getenv("INTERVIEWIQ_PORT", "5000"))
@@ -32,9 +30,12 @@ SESSIONS: dict[str, "InterviewSession"] = {}
 SESSIONS_LOCK = threading.Lock()
 
 
-# --------------------------------------------------
-# DATA MODELS
-# --------------------------------------------------
+@dataclass
+class InterviewMessage:
+    role: str
+    text: str
+
+
 @dataclass
 class InterviewSession:
     session_id: str
@@ -44,7 +45,7 @@ class InterviewSession:
     difficulty: str
     num_questions: int
     focus_area: str = ""
-    conversation: list[dict[str, Any]] = field(default_factory=list)
+    conversation: list[InterviewMessage] = field(default_factory=list)
     system_prompt: str = ""
     question_count: int = 0
     grading: dict[str, Any] | None = None
@@ -55,9 +56,6 @@ class InterviewSession:
         return f"{self.job_title} · {self.industry} · {self.difficulty}"
 
 
-# --------------------------------------------------
-# HELPERS
-# --------------------------------------------------
 def ok(payload: dict[str, Any], status: int = 200):
     return jsonify(payload), status
 
@@ -77,10 +75,6 @@ def normalize_difficulty(value: str) -> str:
     }
     cleaned = (value or "").strip()
     return mapping.get(cleaned.lower(), cleaned or "Mid Level")
-
-
-def get_client(api_key: str) -> genai.Client:
-    return genai.Client(api_key=api_key)
 
 
 def build_system_prompt(job_title: str, industry: str, difficulty: str, num_questions: int, focus_area: str) -> str:
@@ -130,7 +124,6 @@ def parse_grading(text: str) -> dict[str, Any] | None:
 def sanitize_grading(grading: dict[str, Any] | None) -> dict[str, Any] | None:
     if not grading:
         return None
-
     categories = grading.get("categories") or {}
     return {
         "overall_score": int(grading.get("overall_score", 0)),
@@ -150,12 +143,40 @@ def sanitize_grading(grading: dict[str, Any] | None) -> dict[str, Any] | None:
     }
 
 
-def call_gemini(api_key: str, conversation: list[dict[str, Any]]) -> str:
-    client = get_client(api_key)
-    response = client.models.generate_content(
-        model=MODEL_NAME,
-        contents=conversation,
+def build_initial_turn(system_prompt: str) -> str:
+    return (
+        f"[INTERVIEW CONTEXT]\n{system_prompt}\n\n"
+        "Begin with a brief professional greeting (2-3 sentences), then ask Question 1."
     )
+
+
+def build_end_turn() -> str:
+    return (
+        "Please end the interview now. Provide the full grading assessment exactly as specified - "
+        "write END_INTERVIEW on its own line, then the JSON block."
+    )
+
+
+def to_gemini_contents(conversation: list[InterviewMessage]) -> list[types.Content]:
+    contents: list[types.Content] = []
+    for message in conversation:
+        role = "model" if message.role == "model" else "user"
+        contents.append(
+            types.Content(
+                role=role,
+                parts=[types.Part.from_text(text=message.text)],
+            )
+        )
+    return contents
+
+
+def call_gemini(api_key: str, conversation: list[InterviewMessage]) -> str:
+    contents = to_gemini_contents(conversation)
+    with genai.Client(api_key=api_key) as client:
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=contents,
+        )
     text = (response.text or "").strip()
     if not text:
         raise RuntimeError("The model returned an empty response.")
@@ -171,38 +192,21 @@ def update_question_count(current_count: int, reply: str, total_q: int) -> int:
     return current_count
 
 
-def build_initial_turn(system_prompt: str) -> str:
-    return (
-        f"[INTERVIEW CONTEXT]\n{system_prompt}\n\n"
-        "Begin with a brief professional greeting (2-3 sentences), then ask Question 1."
-    )
-
-
-def build_end_turn() -> str:
-    return (
-        "Please end the interview now. Provide the full grading assessment exactly as specified - "
-        "write END_INTERVIEW on its own line, then the JSON block."
-    )
-
-
-
-
 @app.after_request
 def add_cors_headers(response):
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS'
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
     return response
 
-@app.route('/api/start', methods=['OPTIONS'])
-@app.route('/api/message', methods=['OPTIONS'])
-@app.route('/api/end', methods=['OPTIONS'])
-def api_preflight():
-    return ('', 204)
 
-# --------------------------------------------------
-# ROUTES
-# --------------------------------------------------
+@app.route("/api/start", methods=["OPTIONS"])
+@app.route("/api/message", methods=["OPTIONS"])
+@app.route("/api/end", methods=["OPTIONS"])
+def api_preflight():
+    return ("", 204)
+
+
 def _find_frontend_file() -> str | None:
     for name in FRONTEND_CANDIDATES:
         if os.path.exists(os.path.join(BASE_DIR, name)):
@@ -222,18 +226,6 @@ def root():
         "model": MODEL_NAME,
         "expected_frontend_files": FRONTEND_CANDIDATES,
         "base_dir": BASE_DIR,
-    })
-
-
-
-
-@app.get('/debug/files')
-def debug_files():
-    return ok({
-        'ok': True,
-        'baseDir': BASE_DIR,
-        'files': sorted(os.listdir(BASE_DIR)),
-        'frontendFound': _find_frontend_file(),
     })
 
 
@@ -276,15 +268,14 @@ def start_interview():
         system_prompt=system_prompt,
     )
 
-    initial_turn = build_initial_turn(system_prompt)
-    session.conversation.append({"role": "user", "parts": [initial_turn]})
+    session.conversation.append(InterviewMessage(role="user", text=build_initial_turn(system_prompt)))
 
     try:
         reply = call_gemini(session.api_key, session.conversation)
     except Exception as exc:
         return err(f"Gemini request failed: {exc}", status=502, code="provider_error")
 
-    session.conversation.append({"role": "model", "parts": [reply]})
+    session.conversation.append(InterviewMessage(role="model", text=reply))
     session.question_count = update_question_count(0, reply, session.num_questions)
 
     grading = None
@@ -333,14 +324,14 @@ def send_message():
     if session.complete:
         return err("This interview is already complete.", code="session_complete")
 
-    session.conversation.append({"role": "user", "parts": [message]})
+    session.conversation.append(InterviewMessage(role="user", text=message))
 
     try:
         reply = call_gemini(session.api_key, session.conversation)
     except Exception as exc:
         return err(f"Gemini request failed: {exc}", status=502, code="provider_error")
 
-    session.conversation.append({"role": "model", "parts": [reply]})
+    session.conversation.append(InterviewMessage(role="model", text=reply))
     session.question_count = update_question_count(session.question_count, reply, session.num_questions)
 
     grading = None
@@ -384,14 +375,14 @@ def end_interview():
     if session.complete:
         return ok({"ok": True, "done": True, "grading": session.grading, "reply": ""})
 
-    session.conversation.append({"role": "user", "parts": [build_end_turn()]})
+    session.conversation.append(InterviewMessage(role="user", text=build_end_turn()))
 
     try:
         reply = call_gemini(session.api_key, session.conversation)
     except Exception as exc:
         return err(f"Gemini request failed: {exc}", status=502, code="provider_error")
 
-    session.conversation.append({"role": "model", "parts": [reply]})
+    session.conversation.append(InterviewMessage(role="model", text=reply))
 
     reply_text = reply
     grading = None
