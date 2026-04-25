@@ -299,11 +299,14 @@
     <h2>Configure Your Interview</h2>
     <p>This version connects your HTML UI to a local Python backend. Enter your Gemini API key, then start a role-specific mock interview.</p>
 
-    <div class="status-note" id="backend-status">Checking local backend… Open from http://127.0.0.1:5000/ for the simplest setup.</div>
+    <div class="status-note" id="backend-status">Checking local backend…</div>
     <div class="api-note">🔑 Your Gemini API key is sent only to your local Python server at <strong>http://127.0.0.1:5000</strong>. It is not stored in the page.</div>
 
     <label for="api-key">Gemini API Key</label>
     <input type="password" id="api-key" placeholder="AIza..." autocomplete="off">
+
+    <label for="candidate-name">Candidate Name (optional)</label>
+    <input type="text" id="candidate-name" placeholder="e.g. Alex Johnson" autocomplete="name">
 
     <label for="job-title">Job Title / Role</label>
     <input type="text" id="job-title" placeholder="e.g. Senior Software Engineer">
@@ -437,6 +440,7 @@ const API_BASE = window.location.protocol === 'file:'
 let state = {
   apiKey: '',
   sessionId: null,
+  candidateName: '',
   jobTitle: '',
   industry: '',
   difficulty: '',
@@ -527,17 +531,11 @@ function removeTyping() {
 }
 
 async function api(path, body) {
-  let res;
-  try {
-    res = await fetch(`${API_BASE}${path}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-  } catch (err) {
-    throw new Error('Could not reach the local backend. Make sure Python is running, then open the app from http://127.0.0.1:5000/ or keep the updated CORS-enabled backend running.');
-  }
-
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
   const data = await res.json().catch(() => ({}));
   if (!res.ok || data.ok === false) {
     throw new Error(data?.error?.message || `Request failed (${res.status})`);
@@ -563,11 +561,13 @@ async function startInterview() {
   clearError();
 
   const apiKey = document.getElementById('api-key').value.trim();
+  const candidateName = document.getElementById('candidate-name').value.trim();
   const jobTitle = document.getElementById('job-title').value.trim();
   if (!apiKey) return showError('Please enter your Gemini API key.');
   if (!jobTitle) return showError('Please enter a job title.');
 
   state.apiKey = apiKey;
+  state.candidateName = candidateName;
   state.jobTitle = jobTitle;
   state.industry = document.getElementById('industry').value;
   state.difficulty = document.getElementById('difficulty').value;
@@ -577,6 +577,7 @@ async function startInterview() {
   try {
     const data = await api('/api/start', {
       apiKey,
+      candidateName,
       jobTitle,
       industry: state.industry,
       difficulty: state.difficulty,
@@ -585,7 +586,7 @@ async function startInterview() {
     });
 
     state.sessionId = data.sessionId;
-    document.getElementById('interview-meta').textContent = data.meta;
+    document.getElementById('interview-meta').textContent = data.meta || [state.candidateName, state.jobTitle, state.industry, state.difficulty].filter(Boolean).join(' · ');
     document.getElementById('chat-area').innerHTML = '';
     buildProgressDots();
     updateProgress(data.questionCount || 1);
@@ -716,7 +717,9 @@ function showResults(grading) {
 
 function restartInterview() {
   state.sessionId = null;
+  state.candidateName = '';
   state.questionCount = 0;
+  document.getElementById('candidate-name').value = '';
   document.getElementById('job-title').value = '';
   document.getElementById('focus-area').value = '';
   document.getElementById('user-input').value = '';
