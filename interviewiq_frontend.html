@@ -428,6 +428,7 @@
       <ul id="tips-list"></ul>
     </div>
 
+    <button class="btn-restart" id="download-report-btn">↓ Download Report Card</button>
     <button class="btn-restart" id="restart-btn">← Start New Interview</button>
   </div>
 </div>
@@ -448,6 +449,8 @@ let state = {
   questionCount: 0,
   isBusy: false,
 };
+
+let latestGrading = null;
 
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
@@ -649,6 +652,7 @@ async function endInterviewEarly() {
 }
 
 function showResults(grading) {
+  latestGrading = grading;
   showScreen('results-screen');
   setBusy(false);
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -715,7 +719,85 @@ function showResults(grading) {
   fillList('tips-list', grading.tips);
 }
 
+
+function safeReportValue(value, fallback = 'N/A') {
+  if (value === null || value === undefined || value === '') return fallback;
+  return String(value);
+}
+
+function listToLines(items) {
+  if (!items || !items.length) return '- N/A';
+  return items.map(item => `- ${item}`).join('\n');
+}
+
+function downloadReportCard() {
+  if (!latestGrading) {
+    alert('No interview results are available to download yet.');
+    return;
+  }
+
+  const categories = latestGrading.categories || {};
+  const candidate = state.candidateName || document.getElementById('candidate-name').value.trim() || 'Candidate';
+  const generatedDate = new Date().toLocaleString();
+
+  const report = `
+InterviewIQ Report Card
+=======================
+
+Generated: ${generatedDate}
+
+Candidate: ${candidate}
+Role: ${safeReportValue(state.jobTitle)}
+Industry: ${safeReportValue(state.industry)}
+Difficulty: ${safeReportValue(state.difficulty)}
+Questions: ${safeReportValue(state.numQuestions)}
+
+Overall Result
+--------------
+Overall Score: ${safeReportValue(latestGrading.overall_score)}/100
+Grade: ${safeReportValue(latestGrading.grade)} — ${safeReportValue(latestGrading.grade_label)}
+
+Category Scores
+---------------
+Communication: ${safeReportValue(categories.Communication)}/100
+Relevance: ${safeReportValue(categories.Relevance)}/100
+Depth: ${safeReportValue(categories.Depth)}/100
+Confidence: ${safeReportValue(categories.Confidence)}/100
+Problem Solving: ${safeReportValue(categories['Problem Solving'])}/100
+
+Overall Summary
+---------------
+${safeReportValue(latestGrading.summary)}
+
+Strengths
+---------
+${listToLines(latestGrading.strengths)}
+
+Areas for Improvement
+---------------------
+${listToLines(latestGrading.improvements)}
+
+Actionable Tips
+---------------
+${listToLines(latestGrading.tips)}
+`.trim();
+
+  const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const safeRole = (state.jobTitle || 'Interview').replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_');
+  const a = document.createElement('a');
+
+  a.href = url;
+  a.download = `InterviewIQ_Report_Card_${safeRole}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
+}
+
 function restartInterview() {
+  latestGrading = null;
   state.sessionId = null;
   state.candidateName = '';
   state.questionCount = 0;
@@ -736,6 +818,7 @@ function autoResize(el) {
 document.getElementById('start-btn').addEventListener('click', startInterview);
 document.getElementById('send-btn').addEventListener('click', sendMessage);
 document.getElementById('end-btn').addEventListener('click', endInterviewEarly);
+document.getElementById('download-report-btn').addEventListener('click', downloadReportCard);
 document.getElementById('restart-btn').addEventListener('click', restartInterview);
 document.getElementById('user-input').addEventListener('input', (e) => autoResize(e.target));
 document.getElementById('user-input').addEventListener('keydown', (e) => {
