@@ -278,6 +278,57 @@
   .feedback-section ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
   .feedback-section li { line-height: 1.55; display: flex; gap: 10px; }
   .feedback-section li::before { content: '▸'; color: var(--accent); }
+  .coach-card {
+    background: linear-gradient(135deg, rgba(123,104,238,.12), rgba(200,169,110,.08));
+    border: 1px solid rgba(200,169,110,.28);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 16px 40px rgba(0,0,0,.22);
+  }
+  .coach-card h3 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .coach-main { display: flex; justify-content: space-between; gap: 18px; align-items: center; margin-bottom: 14px; }
+  .coach-area { font-family: 'Playfair Display', serif; font-size: 1.7rem; font-weight: 900; }
+  .coach-score {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--accent);
+    border: 1px solid rgba(200,169,110,.35);
+    border-radius: 999px;
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+  .coach-copy { color: var(--text-dim); line-height: 1.65; margin-bottom: 14px; }
+  .coach-drill {
+    display: none;
+    background: rgba(10,10,15,.45);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    line-height: 1.65;
+    margin-top: 14px;
+  }
+  .coach-drill.active { display: block; }
+  .coach-drill strong { color: var(--accent); }
+  .btn-coach {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #0a0a0f;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .72rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .btn-coach:hover { opacity: .92; }
   .summary-text { line-height: 1.7; }
   .btn-restart { background: transparent; border: 1px solid var(--accent); color: var(--accent); margin-top: 24px; }
 
@@ -407,6 +458,19 @@
     </div>
 
     <div class="categories-grid" id="categories-grid"></div>
+
+    <div class="coach-card" id="weakest-area-card">
+      <h3>Weakest Area Coach</h3>
+      <div class="coach-main">
+        <div>
+          <div class="coach-area" id="weakest-area-name">—</div>
+          <p class="coach-copy" id="weakest-area-message">Complete an interview to see your recommended practice area.</p>
+        </div>
+        <div class="coach-score" id="weakest-area-score">— / 100</div>
+      </div>
+      <button class="btn-coach" id="practice-drill-btn">Start Practice Drill</button>
+      <div class="coach-drill" id="practice-drill-box"></div>
+    </div>
 
     <div class="feedback-section">
       <h3>Overall Summary</h3>
@@ -651,6 +715,77 @@ async function endInterviewEarly() {
   }
 }
 
+const practiceDrills = {
+  Communication: {
+    message: 'Your answers may need clearer structure, smoother wording, or a stronger beginning and ending.',
+    drill: 'Give a 60-second answer using this structure: 1) direct answer, 2) quick example, 3) result, 4) what you learned. Record yourself or time yourself while practicing.'
+  },
+  Relevance: {
+    message: 'Your answers may need to connect more directly to the role, industry, or exact question being asked.',
+    drill: 'Pick one previous answer and rewrite it so every sentence connects back to the job. Mention the role, the skill being tested, and why your example proves you can do the work.'
+  },
+  Depth: {
+    message: 'Your answers may need more detail, stronger examples, measurable results, or deeper reasoning.',
+    drill: 'Answer one previous question again, but add a specific example, the challenge, your exact actions, a measurable result, and what you would improve next time.'
+  },
+  Confidence: {
+    message: 'Your answers may need more ownership, decisiveness, and fewer uncertain phrases.',
+    drill: 'Practice the same answer again while removing phrases like "maybe," "I think," and "I guess." Use confident phrases such as "I decided," "I led," "I solved," and "the result was."'
+  },
+  'Problem Solving': {
+    message: 'Your answers may need stronger reasoning about tradeoffs, constraints, decisions, and outcomes.',
+    drill: 'Take one technical or situational question and explain your process step by step: problem, constraints, options, tradeoffs, decision, result, and what you learned.'
+  }
+};
+
+function getWeakestCategory(categories) {
+  const entries = Object.entries(categories || {}).filter(([, value]) => Number.isFinite(Number(value)));
+  if (!entries.length) return null;
+  entries.sort((a, b) => Number(a[1]) - Number(b[1]));
+  return { name: entries[0][0], score: Number(entries[0][1]) };
+}
+
+function updateWeakestAreaCoach(grading) {
+  const weakest = getWeakestCategory(grading.categories);
+  const nameEl = document.getElementById('weakest-area-name');
+  const scoreEl = document.getElementById('weakest-area-score');
+  const messageEl = document.getElementById('weakest-area-message');
+  const drillBox = document.getElementById('practice-drill-box');
+
+  drillBox.classList.remove('active');
+  drillBox.innerHTML = '';
+
+  if (!weakest) {
+    nameEl.textContent = 'Not available';
+    scoreEl.textContent = '— / 100';
+    messageEl.textContent = 'The category scores were not available, so a weakest area could not be detected.';
+    return;
+  }
+
+  const drillInfo = practiceDrills[weakest.name] || {
+    message: 'This was your lowest category, so it is the best area to practice next.',
+    drill: 'Review one previous answer and improve it by adding a clearer example, stronger reasoning, and a specific result.'
+  };
+
+  nameEl.textContent = weakest.name;
+  scoreEl.textContent = `${weakest.score} / 100`;
+  messageEl.textContent = `Your lowest score was ${weakest.name}. ${drillInfo.message}`;
+}
+
+function showPracticeDrill() {
+  if (!latestGrading) return;
+  const weakest = getWeakestCategory(latestGrading.categories);
+  if (!weakest) return;
+
+  const drillInfo = practiceDrills[weakest.name] || {
+    drill: 'Review one previous answer and improve it by adding a clearer example, stronger reasoning, and a specific result.'
+  };
+
+  const drillBox = document.getElementById('practice-drill-box');
+  drillBox.innerHTML = `<strong>Practice Drill for ${weakest.name}:</strong><br>${drillInfo.drill}`;
+  drillBox.classList.add('active');
+}
+
 function showResults(grading) {
   latestGrading = grading;
   showScreen('results-screen');
@@ -717,6 +852,7 @@ function showResults(grading) {
   fillList('strengths-list', grading.strengths);
   fillList('improvements-list', grading.improvements);
   fillList('tips-list', grading.tips);
+  updateWeakestAreaCoach(grading);
 }
 
 
@@ -765,6 +901,11 @@ Depth: ${safeReportValue(categories.Depth)}/100
 Confidence: ${safeReportValue(categories.Confidence)}/100
 Problem Solving: ${safeReportValue(categories['Problem Solving'])}/100
 
+Weakest Area Coach
+------------------
+Recommended Practice Area: ${safeReportValue(getWeakestCategory(categories)?.name)}
+Lowest Category Score: ${safeReportValue(getWeakestCategory(categories)?.score)}/100
+
 Overall Summary
 ---------------
 ${safeReportValue(latestGrading.summary)}
@@ -805,6 +946,11 @@ function restartInterview() {
   document.getElementById('job-title').value = '';
   document.getElementById('focus-area').value = '';
   document.getElementById('user-input').value = '';
+  const drillBox = document.getElementById('practice-drill-box');
+  if (drillBox) {
+    drillBox.classList.remove('active');
+    drillBox.innerHTML = '';
+  }
   clearError();
   showScreen('setup-screen');
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -819,6 +965,7 @@ document.getElementById('start-btn').addEventListener('click', startInterview);
 document.getElementById('send-btn').addEventListener('click', sendMessage);
 document.getElementById('end-btn').addEventListener('click', endInterviewEarly);
 document.getElementById('download-report-btn').addEventListener('click', downloadReportCard);
+document.getElementById('practice-drill-btn').addEventListener('click', showPracticeDrill);
 document.getElementById('restart-btn').addEventListener('click', restartInterview);
 document.getElementById('user-input').addEventListener('input', (e) => autoResize(e.target));
 document.getElementById('user-input').addEventListener('keydown', (e) => {
