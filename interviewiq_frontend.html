@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>InterviewIQ — AI Interview Coach</title>
+<title>InterviewIQ — Dual Mode Interview Coach</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
 
@@ -48,9 +48,9 @@
 
   .screen { display: none; flex-direction: column; width: 100%; min-height: 100dvh; position: relative; z-index: 1; }
   .screen.active { display: flex; }
+  .hidden { display: none !important; }
 
   #setup-screen { align-items: center; justify-content: flex-start; padding: 40px 20px; overflow-y: auto; }
-
   .logo-area { text-align: center; margin-bottom: 48px; }
   .logo-badge {
     width: 64px; height: 64px; margin: 0 auto 16px;
@@ -81,13 +81,13 @@
     border-radius: 20px;
     padding: 40px;
     width: 100%;
-    max-width: 580px;
+    max-width: 620px;
     box-shadow: 0 20px 60px rgba(0,0,0,.5);
   }
   .setup-card h2 { font-family: 'Playfair Display', serif; font-size: 1.4rem; margin-bottom: 8px; }
   .setup-card p { color: var(--text-dim); font-size: .92rem; line-height: 1.6; margin-bottom: 22px; }
 
-  .api-note, .status-note {
+  .api-note, .status-note, .mode-note {
     border-radius: 10px;
     padding: 12px 14px;
     font-size: .8rem;
@@ -105,6 +105,44 @@
     border: 1px solid rgba(123,104,238,.2);
     color: #b8adff;
   }
+  .mode-note {
+    background: rgba(74,222,128,.08);
+    border: 1px solid rgba(74,222,128,.2);
+    color: #a7eec0;
+  }
+
+  .mode-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .mode-btn {
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text-dim);
+    border-radius: 12px;
+    padding: 14px 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color .2s, transform .1s, box-shadow .2s, color .2s;
+  }
+  .mode-btn:hover { border-color: rgba(200,169,110,.45); }
+  .mode-btn.active {
+    color: var(--text);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--glow);
+    background: linear-gradient(135deg, rgba(200,169,110,.10), rgba(123,104,238,.08));
+  }
+  .mode-btn strong {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .76rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .mode-btn span { font-size: .84rem; line-height: 1.5; display: block; }
 
   label {
     display: block;
@@ -250,7 +288,7 @@
 
   #results-screen { overflow-y: auto; padding: 40px 20px; align-items: center; justify-content: flex-start; }
   .results-inner { width: 100%; max-width: 700px; }
-  .results-header { text-align: center; margin-bottom: 40px; }
+  .results-header { text-align: center; margin-bottom: 32px; }
   .results-header h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 900; margin-bottom: 8px; }
   .results-header p { color: var(--text-dim); font-size: .875rem; }
   .score-ring-area { display: flex; justify-content: center; margin-bottom: 36px; }
@@ -278,12 +316,63 @@
   .feedback-section ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
   .feedback-section li { line-height: 1.55; display: flex; gap: 10px; }
   .feedback-section li::before { content: '▸'; color: var(--accent); }
-  .summary-text { line-height: 1.7; }
-  .btn-restart { background: transparent; border: 1px solid var(--accent); color: var(--accent); margin-top: 24px; }
+  .coach-card {
+    background: linear-gradient(135deg, rgba(123,104,238,.12), rgba(200,169,110,.08));
+    border: 1px solid rgba(200,169,110,.28);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 16px 40px rgba(0,0,0,.22);
+  }
+  .coach-card h3 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .coach-main { display: flex; justify-content: space-between; gap: 18px; align-items: center; margin-bottom: 14px; }
+  .coach-area { font-family: 'Playfair Display', serif; font-size: 1.7rem; font-weight: 900; }
+  .coach-score {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--accent);
+    border: 1px solid rgba(200,169,110,.35);
+    border-radius: 999px;
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+  .coach-copy { color: var(--text-dim); line-height: 1.65; margin-bottom: 14px; }
+  .coach-drill {
+    display: none;
+    background: rgba(10,10,15,.45);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    line-height: 1.65;
+    margin-top: 14px;
+  }
+  .coach-drill.active { display: block; }
+  .coach-drill strong { color: var(--accent); }
+  .btn-coach {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    color: #0a0a0f;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .72rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .summary-text { line-height: 1.7; white-space: pre-wrap; }
+  .btn-restart { background: transparent; border: 1px solid var(--accent); color: var(--accent); margin-top: 14px; }
 
   @media (max-width: 760px) {
-    .field-row, .categories-grid { grid-template-columns: 1fr; }
+    .field-row, .categories-grid, .mode-toggle { grid-template-columns: 1fr; }
     .interview-header { flex-wrap: wrap; }
+    .coach-main { flex-direction: column; align-items: flex-start; }
   }
 </style>
 </head>
@@ -296,8 +385,20 @@
   </div>
 
   <div class="setup-card">
-    <h2>Configure Your Interview</h2>
-    <p>This version connects your HTML UI to a local Python backend. Enter your Gemini API key, then start a role-specific mock interview.</p>
+    <h2 id="setup-title">Configure Your Interview</h2>
+    <p id="setup-copy">Choose how you want to use the simulator: practice as the interviewee, or act as the employer and question a mock candidate.</p>
+
+    <div class="mode-toggle">
+      <button type="button" class="mode-btn active" id="mode-interviewee">
+        <strong>Interviewee Mode</strong>
+        <span>The AI interviewer asks the questions and grades your answers.</span>
+      </button>
+      <button type="button" class="mode-btn" id="mode-employer">
+        <strong>Employer Mode</strong>
+        <span>You ask the questions and the AI answers as a candidate for the role.</span>
+      </button>
+    </div>
+    <div class="mode-note" id="mode-note">Current mode: the AI will interview you and produce a graded report at the end.</div>
 
     <div class="status-note" id="backend-status">Checking local backend…</div>
     <div class="api-note">🔑 Your Gemini API key is sent only to your local Python server at <strong>http://127.0.0.1:5000</strong>. It is not stored in the page.</div>
@@ -305,10 +406,10 @@
     <label for="api-key">Gemini API Key</label>
     <input type="password" id="api-key" placeholder="AIza..." autocomplete="off">
 
-    <label for="candidate-name">Candidate Name (optional)</label>
+    <label for="candidate-name" id="candidate-name-label">Candidate Name (optional)</label>
     <input type="text" id="candidate-name" placeholder="e.g. Alex Johnson" autocomplete="name">
 
-    <label for="job-title">Job Title / Role</label>
+    <label for="job-title" id="job-title-label">Job Title / Role</label>
     <input type="text" id="job-title" placeholder="e.g. Senior Software Engineer">
 
     <div class="field-row">
@@ -328,7 +429,7 @@
         </select>
       </div>
       <div>
-        <label for="difficulty">Interview Level</label>
+        <label for="difficulty" id="difficulty-label">Interview Level</label>
         <select id="difficulty">
           <option>Entry Level</option>
           <option selected>Mid Level</option>
@@ -338,15 +439,17 @@
       </div>
     </div>
 
-    <label for="num-questions">Number of Questions</label>
-    <select id="num-questions">
-      <option value="3">3 — Quick Session</option>
-      <option value="5" selected>5 — Standard Session</option>
-      <option value="8">8 — Deep Dive</option>
-      <option value="10">10 — Full Interview</option>
-    </select>
+    <div id="questions-group">
+      <label for="num-questions">Number of Questions</label>
+      <select id="num-questions">
+        <option value="3">3 — Quick Session</option>
+        <option value="5" selected>5 — Standard Session</option>
+        <option value="8">8 — Deep Dive</option>
+        <option value="10">10 — Full Interview</option>
+      </select>
+    </div>
 
-    <label for="focus-area">Focus Areas (optional)</label>
+    <label for="focus-area" id="focus-area-label">Focus Areas (optional)</label>
     <textarea id="focus-area" placeholder="e.g. system design, leadership, conflict resolution"></textarea>
 
     <div id="error-msg"></div>
@@ -363,7 +466,7 @@
         <div class="interview-meta" id="interview-meta"></div>
       </div>
     </div>
-    <div class="progress-area">
+    <div class="progress-area" id="progress-area">
       <span class="q-counter" id="q-counter">0 / 0</span>
       <div class="progress-dots" id="progress-dots"></div>
     </div>
@@ -381,7 +484,7 @@
         <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
       </button>
     </div>
-    <div class="input-hint">Press Enter to send · Shift+Enter for new line</div>
+    <div class="input-hint" id="input-hint">Press Enter to send · Shift+Enter for new line</div>
   </div>
 </div>
 
@@ -392,7 +495,7 @@
       <p id="results-subtitle">Here is your performance breakdown</p>
     </div>
 
-    <div class="score-ring-area">
+    <div class="score-ring-area" id="score-ring-area">
       <div class="score-ring-wrap">
         <svg viewBox="0 0 160 160">
           <circle class="score-ring-bg" cx="80" cy="80" r="70"></circle>
@@ -400,7 +503,7 @@
         </svg>
         <div class="score-center">
           <div class="score-num" id="score-display">—</div>
-          <div class="score-label">/ 100</div>
+          <div class="score-label" id="score-label">/ 100</div>
           <div class="grade-badge" id="grade-badge">—</div>
         </div>
       </div>
@@ -408,27 +511,41 @@
 
     <div class="categories-grid" id="categories-grid"></div>
 
+    <div class="coach-card" id="weakest-area-card">
+      <h3>Weakest Area Coach</h3>
+      <div class="coach-main">
+        <div>
+          <div class="coach-area" id="weakest-area-name">—</div>
+          <p class="coach-copy" id="weakest-area-message">Complete an interview to see your recommended practice area.</p>
+        </div>
+        <div class="coach-score" id="weakest-area-score">— / 100</div>
+      </div>
+      <button class="btn-coach" id="practice-drill-btn">Start Practice Drill</button>
+      <div class="coach-drill" id="practice-drill-box"></div>
+    </div>
+
     <div class="feedback-section">
-      <h3>Overall Summary</h3>
+      <h3 id="summary-heading">Overall Summary</h3>
       <p class="summary-text" id="summary-text"></p>
     </div>
 
     <div class="feedback-section">
-      <h3>Strengths</h3>
+      <h3 id="strengths-heading">Strengths</h3>
       <ul id="strengths-list"></ul>
     </div>
 
     <div class="feedback-section">
-      <h3>Areas for Improvement</h3>
+      <h3 id="improvements-heading">Areas for Improvement</h3>
       <ul id="improvements-list"></ul>
     </div>
 
     <div class="feedback-section">
-      <h3>Actionable Tips</h3>
+      <h3 id="tips-heading">Actionable Tips</h3>
       <ul id="tips-list"></ul>
     </div>
 
-    <button class="btn-restart" id="restart-btn">← Start New Interview</button>
+    <button class="btn-restart" id="download-report-btn">↓ Download Report</button>
+    <button class="btn-restart" id="restart-btn">← Start New Session</button>
   </div>
 </div>
 
@@ -440,6 +557,7 @@ const API_BASE = window.location.protocol === 'file:'
 let state = {
   apiKey: '',
   sessionId: null,
+  mode: 'interviewee',
   candidateName: '',
   jobTitle: '',
   industry: '',
@@ -448,6 +566,8 @@ let state = {
   questionCount: 0,
   isBusy: false,
 };
+
+let latestResult = null;
 
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
@@ -471,6 +591,31 @@ function setBusy(isBusy) {
   document.getElementById('send-btn').disabled = isBusy;
   document.getElementById('user-input').disabled = isBusy;
   document.getElementById('start-btn').disabled = isBusy;
+}
+
+function setMode(mode) {
+  state.mode = mode === 'employer' ? 'employer' : 'interviewee';
+  document.getElementById('mode-interviewee').classList.toggle('active', state.mode === 'interviewee');
+  document.getElementById('mode-employer').classList.toggle('active', state.mode === 'employer');
+
+  const employerMode = state.mode === 'employer';
+  document.getElementById('mode-note').textContent = employerMode
+    ? 'Current mode: you play the employer. The AI answers your questions as a candidate for the selected role.'
+    : 'Current mode: the AI will interview you and produce a graded report at the end.';
+  document.getElementById('setup-title').textContent = employerMode ? 'Configure Employer Simulation' : 'Configure Your Interview';
+  document.getElementById('setup-copy').textContent = employerMode
+    ? 'Set the target role, then interview a simulated candidate. End the session anytime to receive a recruiter-style summary.'
+    : 'Choose your role, difficulty, and focus areas. The AI interviewer will ask questions and grade your answers.';
+  document.getElementById('job-title-label').textContent = employerMode ? 'Target Role for Candidate' : 'Job Title / Role';
+  document.getElementById('difficulty-label').textContent = employerMode ? 'Candidate Seniority' : 'Interview Level';
+  document.getElementById('candidate-name-label').textContent = employerMode ? 'Mock Candidate Name (optional)' : 'Candidate Name (optional)';
+  document.getElementById('focus-area-label').textContent = employerMode ? 'Candidate Background / Focus (optional)' : 'Focus Areas (optional)';
+  document.getElementById('job-title').placeholder = employerMode ? 'e.g. Product Manager' : 'e.g. Senior Software Engineer';
+  document.getElementById('focus-area').placeholder = employerMode
+    ? 'e.g. B2B SaaS, cross-functional leadership, analytics, roadmap ownership'
+    : 'e.g. system design, leadership, conflict resolution';
+  document.getElementById('start-btn').textContent = employerMode ? 'Start Candidate Chat →' : 'Begin Interview →';
+  document.getElementById('questions-group').classList.toggle('hidden', employerMode);
 }
 
 function buildProgressDots() {
@@ -550,7 +695,7 @@ async function checkBackend() {
     const data = await res.json();
     el.textContent = `Local backend ready · model: ${data.model}`;
   } catch (err) {
-    el.textContent = 'Backend offline. Start the Python server first: python interviewiq_backend.py';
+    el.textContent = 'Backend offline. Start the Python server first: python interviewiq_backend_dualmode.py';
     el.style.color = '#f87171';
     el.style.borderColor = 'rgba(248,113,113,.2)';
     el.style.background = 'rgba(248,113,113,.08)';
@@ -559,7 +704,6 @@ async function checkBackend() {
 
 async function startInterview() {
   clearError();
-
   const apiKey = document.getElementById('api-key').value.trim();
   const candidateName = document.getElementById('candidate-name').value.trim();
   const jobTitle = document.getElementById('job-title').value.trim();
@@ -578,6 +722,7 @@ async function startInterview() {
     const data = await api('/api/start', {
       apiKey,
       candidateName,
+      mode: state.mode,
       jobTitle,
       industry: state.industry,
       difficulty: state.difficulty,
@@ -586,10 +731,18 @@ async function startInterview() {
     });
 
     state.sessionId = data.sessionId;
-    document.getElementById('interview-meta').textContent = data.meta || [state.candidateName, state.jobTitle, state.industry, state.difficulty].filter(Boolean).join(' · ');
+    state.mode = data.mode || state.mode;
+    state.candidateName = data.candidateName || state.candidateName;
+    document.getElementById('interview-meta').textContent = data.meta || [state.jobTitle, state.industry, state.difficulty].filter(Boolean).join(' · ');
     document.getElementById('chat-area').innerHTML = '';
+    document.getElementById('progress-area').classList.toggle('hidden', state.mode === 'employer');
+    document.getElementById('end-btn').textContent = state.mode === 'employer' ? 'End Session' : 'End & Grade';
+    document.getElementById('user-input').placeholder = state.mode === 'employer' ? 'Type your interview question here...' : 'Type your answer here...';
+    document.getElementById('input-hint').textContent = state.mode === 'employer'
+      ? 'Press Enter to ask your next question · Shift+Enter for new line'
+      : 'Press Enter to send · Shift+Enter for new line';
     buildProgressDots();
-    updateProgress(data.questionCount || 1);
+    updateProgress(state.mode === 'interviewee' ? (data.questionCount || 1) : 0);
     showScreen('interview-screen');
     addMessage('assistant', data.reply);
     document.getElementById('user-input').focus();
@@ -616,10 +769,12 @@ async function sendMessage() {
     const data = await api('/api/message', { sessionId: state.sessionId, message: text });
     removeTyping();
     if (data.done) {
-      showResults(data.grading);
+      showResults(data);
     } else {
       addMessage('assistant', data.reply);
-      updateProgress(data.questionCount || state.questionCount + 1);
+      if (state.mode === 'interviewee') {
+        updateProgress(data.questionCount || state.questionCount + 1);
+      }
     }
   } catch (err) {
     removeTyping();
@@ -632,7 +787,11 @@ async function sendMessage() {
 
 async function endInterviewEarly() {
   if (state.isBusy || !state.sessionId) return;
-  const confirmed = window.confirm('End the interview now and generate feedback?');
+  const confirmed = window.confirm(
+    state.mode === 'employer'
+      ? 'End this employer session and generate a candidate summary?'
+      : 'End the interview now and generate feedback?'
+  );
   if (!confirmed) return;
 
   setBusy(true);
@@ -640,7 +799,7 @@ async function endInterviewEarly() {
   try {
     const data = await api('/api/end', { sessionId: state.sessionId });
     removeTyping();
-    showResults(data.grading);
+    showResults(data);
   } catch (err) {
     removeTyping();
     addMessage('assistant', `⚠️ ${err.message}`);
@@ -648,11 +807,96 @@ async function endInterviewEarly() {
   }
 }
 
-function showResults(grading) {
-  showScreen('results-screen');
-  setBusy(false);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  document.getElementById('results-screen').scrollTop = 0;
+const practiceDrills = {
+  Communication: {
+    message: 'Your answers may need clearer structure, smoother wording, or a stronger beginning and ending.',
+    drill: 'Give a 60-second answer using this structure: 1) direct answer, 2) quick example, 3) result, 4) what you learned. Record yourself or time yourself while practicing.'
+  },
+  Relevance: {
+    message: 'Your answers may need to connect more directly to the role, industry, or exact question being asked.',
+    drill: 'Pick one previous answer and rewrite it so every sentence connects back to the job. Mention the role, the skill being tested, and why your example proves you can do the work.'
+  },
+  Depth: {
+    message: 'Your answers may need more detail, stronger examples, measurable results, or deeper reasoning.',
+    drill: 'Answer one previous question again, but add a specific example, the challenge, your exact actions, a measurable result, and what you would improve next time.'
+  },
+  Confidence: {
+    message: 'Your answers may need more ownership, decisiveness, and fewer uncertain phrases.',
+    drill: 'Practice the same answer again while removing phrases like "maybe," "I think," and "I guess." Use confident phrases such as "I decided," "I led," "I solved," and "the result was."'
+  },
+  'Problem Solving': {
+    message: 'Your answers may need stronger reasoning about tradeoffs, constraints, decisions, and outcomes.',
+    drill: 'Take one technical or situational question and explain your process step by step: problem, constraints, options, tradeoffs, decision, result, and what you learned.'
+  }
+};
+
+function getWeakestCategory(categories) {
+  const entries = Object.entries(categories || {}).filter(([, value]) => Number.isFinite(Number(value)));
+  if (!entries.length) return null;
+  entries.sort((a, b) => Number(a[1]) - Number(b[1]));
+  return { name: entries[0][0], score: Number(entries[0][1]) };
+}
+
+function updateWeakestAreaCoach(grading) {
+  const weakest = getWeakestCategory(grading.categories);
+  const nameEl = document.getElementById('weakest-area-name');
+  const scoreEl = document.getElementById('weakest-area-score');
+  const messageEl = document.getElementById('weakest-area-message');
+  const drillBox = document.getElementById('practice-drill-box');
+
+  drillBox.classList.remove('active');
+  drillBox.innerHTML = '';
+
+  if (!weakest) {
+    nameEl.textContent = 'Not available';
+    scoreEl.textContent = '— / 100';
+    messageEl.textContent = 'The category scores were not available, so a weakest area could not be detected.';
+    return;
+  }
+
+  const drillInfo = practiceDrills[weakest.name] || {
+    message: 'This was your lowest category, so it is the best area to practice next.',
+    drill: 'Review one previous answer and improve it by adding a clearer example, stronger reasoning, and a specific result.'
+  };
+
+  nameEl.textContent = weakest.name;
+  scoreEl.textContent = `${weakest.score} / 100`;
+  messageEl.textContent = `Your lowest score was ${weakest.name}. ${drillInfo.message}`;
+}
+
+function showPracticeDrill() {
+  if (!latestResult || !latestResult.grading) return;
+  const weakest = getWeakestCategory(latestResult.grading.categories);
+  if (!weakest) return;
+
+  const drillInfo = practiceDrills[weakest.name] || {
+    drill: 'Review one previous answer and improve it by adding a clearer example, stronger reasoning, and a specific result.'
+  };
+
+  const drillBox = document.getElementById('practice-drill-box');
+  drillBox.innerHTML = `<strong>Practice Drill for ${weakest.name}:</strong><br>${drillInfo.drill}`;
+  drillBox.classList.add('active');
+}
+
+function fillList(id, items) {
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  (items || []).forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    el.appendChild(li);
+  });
+}
+
+function showIntervieweeResults(grading) {
+  document.getElementById('score-ring-area').classList.remove('hidden');
+  document.getElementById('categories-grid').classList.remove('hidden');
+  document.getElementById('weakest-area-card').classList.remove('hidden');
+  document.getElementById('practice-drill-btn').classList.remove('hidden');
+  document.getElementById('summary-heading').textContent = 'Overall Summary';
+  document.getElementById('strengths-heading').textContent = 'Strengths';
+  document.getElementById('improvements-heading').textContent = 'Areas for Improvement';
+  document.getElementById('tips-heading').textContent = 'Actionable Tips';
 
   const score = grading.overall_score || 0;
   const grade = grading.grade || 'C';
@@ -664,6 +908,7 @@ function showResults(grading) {
   document.getElementById('results-subtitle').textContent = `${state.difficulty} · ${state.industry} · ${state.numQuestions} questions`;
   document.getElementById('score-display').textContent = score;
   document.getElementById('score-display').style.color = color;
+  document.getElementById('score-label').textContent = '/ 100';
 
   const badge = document.getElementById('grade-badge');
   badge.textContent = `${grade} — ${gradeLabel}`;
@@ -699,23 +944,170 @@ function showResults(grading) {
   });
 
   document.getElementById('summary-text').textContent = grading.summary || '';
-
-  const fillList = (id, items) => {
-    const el = document.getElementById(id);
-    el.innerHTML = '';
-    (items || []).forEach(item => {
-      const li = document.createElement('li');
-      li.textContent = item;
-      el.appendChild(li);
-    });
-  };
-
   fillList('strengths-list', grading.strengths);
   fillList('improvements-list', grading.improvements);
   fillList('tips-list', grading.tips);
+  updateWeakestAreaCoach(grading);
+}
+
+function showEmployerResults(summaryData) {
+  document.getElementById('score-ring-area').classList.add('hidden');
+  document.getElementById('categories-grid').classList.add('hidden');
+  document.getElementById('weakest-area-card').classList.add('hidden');
+  document.getElementById('summary-heading').textContent = 'Candidate Summary';
+  document.getElementById('strengths-heading').textContent = 'Notable Strengths';
+  document.getElementById('improvements-heading').textContent = 'Concerns / Gaps';
+  document.getElementById('tips-heading').textContent = 'Suggested Follow-Up Questions';
+
+  document.getElementById('results-title').textContent = 'Candidate Simulation Complete';
+  document.getElementById('results-subtitle').textContent = `${state.jobTitle} · ${state.difficulty} · ${state.industry}`;
+
+  const profile = summaryData.candidate_profile ? `${summaryData.candidate_profile}\n\n` : '';
+  document.getElementById('summary-text').textContent = `${profile}${summaryData.summary || ''}`.trim();
+  fillList('strengths-list', summaryData.strengths);
+  fillList('improvements-list', summaryData.concerns);
+  fillList('tips-list', summaryData.follow_ups);
+}
+
+function showResults(data) {
+  latestResult = {
+    mode: data.mode || state.mode,
+    grading: data.grading || null,
+    summaryData: data.summaryData || null,
+  };
+  state.mode = latestResult.mode;
+  showScreen('results-screen');
+  setBusy(false);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.getElementById('results-screen').scrollTop = 0;
+
+  if (state.mode === 'employer' && latestResult.summaryData) {
+    showEmployerResults(latestResult.summaryData);
+  } else if (latestResult.grading) {
+    showIntervieweeResults(latestResult.grading);
+  }
+}
+
+function safeReportValue(value, fallback = 'N/A') {
+  if (value === null || value === undefined || value === '') return fallback;
+  return String(value);
+}
+
+function listToLines(items) {
+  if (!items || !items.length) return '- N/A';
+  return items.map(item => `- ${item}`).join('\n');
+}
+
+function downloadReport() {
+  if (!latestResult) {
+    alert('No session results are available to download yet.');
+    return;
+  }
+
+  const generatedDate = new Date().toLocaleString();
+  const candidate = state.candidateName || document.getElementById('candidate-name').value.trim() || 'Candidate';
+  let report = '';
+
+  if (latestResult.mode === 'employer' && latestResult.summaryData) {
+    const s = latestResult.summaryData;
+    report = `
+InterviewIQ Employer Session Summary
+===================================
+
+Generated: ${generatedDate}
+
+Candidate: ${candidate}
+Target Role: ${safeReportValue(state.jobTitle)}
+Industry: ${safeReportValue(state.industry)}
+Candidate Level: ${safeReportValue(state.difficulty)}
+
+Candidate Profile
+-----------------
+${safeReportValue(s.candidate_profile)}
+
+Candidate Summary
+-----------------
+${safeReportValue(s.summary)}
+
+Notable Strengths
+-----------------
+${listToLines(s.strengths)}
+
+Concerns / Gaps
+---------------
+${listToLines(s.concerns)}
+
+Suggested Follow-Up Questions
+-----------------------------
+${listToLines(s.follow_ups)}
+`.trim();
+    const safeRole = (state.jobTitle || 'Candidate_Session').replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_');
+    saveTextBlob(report, `InterviewIQ_Employer_Summary_${safeRole}.txt`);
+    return;
+  }
+
+  const g = latestResult.grading || {};
+  const categories = g.categories || {};
+  report = `
+InterviewIQ Report Card
+=======================
+
+Generated: ${generatedDate}
+
+Candidate: ${candidate}
+Role: ${safeReportValue(state.jobTitle)}
+Industry: ${safeReportValue(state.industry)}
+Difficulty: ${safeReportValue(state.difficulty)}
+Questions: ${safeReportValue(state.numQuestions)}
+
+Overall Result
+--------------
+Overall Score: ${safeReportValue(g.overall_score)}/100
+Grade: ${safeReportValue(g.grade)} — ${safeReportValue(g.grade_label)}
+
+Category Scores
+---------------
+Communication: ${safeReportValue(categories.Communication)}/100
+Relevance: ${safeReportValue(categories.Relevance)}/100
+Depth: ${safeReportValue(categories.Depth)}/100
+Confidence: ${safeReportValue(categories.Confidence)}/100
+Problem Solving: ${safeReportValue(categories['Problem Solving'])}/100
+
+Overall Summary
+---------------
+${safeReportValue(g.summary)}
+
+Strengths
+---------
+${listToLines(g.strengths)}
+
+Areas for Improvement
+---------------------
+${listToLines(g.improvements)}
+
+Actionable Tips
+---------------
+${listToLines(g.tips)}
+`.trim();
+
+  const safeRole = (state.jobTitle || 'Interview').replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_');
+  saveTextBlob(report, `InterviewIQ_Report_Card_${safeRole}.txt`);
+}
+
+function saveTextBlob(text, filename) {
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 function restartInterview() {
+  latestResult = null;
   state.sessionId = null;
   state.candidateName = '';
   state.questionCount = 0;
@@ -723,6 +1115,9 @@ function restartInterview() {
   document.getElementById('job-title').value = '';
   document.getElementById('focus-area').value = '';
   document.getElementById('user-input').value = '';
+  const drillBox = document.getElementById('practice-drill-box');
+  drillBox.classList.remove('active');
+  drillBox.innerHTML = '';
   clearError();
   showScreen('setup-screen');
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -733,9 +1128,13 @@ function autoResize(el) {
   el.style.height = Math.min(el.scrollHeight, 120) + 'px';
 }
 
+document.getElementById('mode-interviewee').addEventListener('click', () => setMode('interviewee'));
+document.getElementById('mode-employer').addEventListener('click', () => setMode('employer'));
 document.getElementById('start-btn').addEventListener('click', startInterview);
 document.getElementById('send-btn').addEventListener('click', sendMessage);
 document.getElementById('end-btn').addEventListener('click', endInterviewEarly);
+document.getElementById('download-report-btn').addEventListener('click', downloadReport);
+document.getElementById('practice-drill-btn').addEventListener('click', showPracticeDrill);
 document.getElementById('restart-btn').addEventListener('click', restartInterview);
 document.getElementById('user-input').addEventListener('input', (e) => autoResize(e.target));
 document.getElementById('user-input').addEventListener('keydown', (e) => {
@@ -745,6 +1144,7 @@ document.getElementById('user-input').addEventListener('keydown', (e) => {
   }
 });
 
+setMode('interviewee');
 checkBackend();
 </script>
 </body>
