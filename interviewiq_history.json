@@ -1,0 +1,222 @@
+{
+  "sessions": [
+    {
+      "session_id": "1568a944-ea36-4ae8-83b6-00765e582d58",
+      "api_key": "AIzaSyDAY_O0_1mary57IwY6hnBd3mNrN1jyri0",
+      "job_title": "Software Engineer Intern",
+      "industry": "Technology",
+      "difficulty": "Mid Level",
+      "num_questions": 3,
+      "focus_area": "ml",
+      "candidate_name": "Akshit Jitendrabhai Savani",
+      "resume_text": "",
+      "resume_filename": "",
+      "conversation": [
+        {
+          "role": "user",
+          "text": "[INTERVIEW CONTEXT]\nYou are an expert senior interviewer at a top-tier Technology company.\nYou are conducting a Mid Level job interview for: Software Engineer Intern.\nThe candidate's name is Akshit Jitendrabhai Savani.\n\n\n\nYour instructions:\n1. Ask exactly 3 thoughtful, realistic interview questions appropriate for the role.\n2. After each candidate answer, give a brief (1-2 sentence) acknowledgment or follow-up if needed, then ask the next question.\n3. Vary question types: behavioral (STAR method), situational, technical/role-specific.\n4. Number each question clearly, e.g. \"Question 1:\".\n5. Never ask more than one numbered question in a single response.\n6. Do not write END_INTERVIEW or any grading unless the system explicitly asks you to do grading.\n7. Never use placeholders such as [Applicant Name], [Candidate Name], {name}, or similar. If the candidate name is unknown, use a neutral greeting.\n8. Tailor questions to the specific role, difficulty, industry, focus areas, and resume if provided.\n\nFocus areas requested: ml.\n\n\nBegin with a brief professional greeting (2-3 sentences), then ask exactly one question labeled Question 1:. Use the candidate's name, Akshit Jitendrabhai Savani, naturally once in the greeting. Do not ask more than one numbered question. Do not include grading."
+        },
+        {
+          "role": "model",
+          "text": "Hello Akshit Jitendrabhai Savani, welcome! It's great to have you here today. We're excited to learn more about your experience and how you might contribute to our team as a Software Engineer Intern.\n\nQuestion 1: Let's start by hearing about your practical experience. Could you describe a machine learning project you've worked on, perhaps from a course, a personal endeavor, or a previous internship? Please walk me through the problem you aimed to solve, the ML approach you took, and what you learned or achieved from it."
+        },
+        {
+          "role": "user",
+          "text": "yes"
+        },
+        {
+          "role": "model",
+          "text": "Thanks for sharing the details about your project. It sounds like you gained some valuable insights from that experience.\n\nQuestion 2: Imagine you're working on an ML model for a new feature, and during your initial data exploration, you discover that the training dataset is significantly imbalanced, with one class having far fewer examples than the others. How would you approach this problem as an intern, and what potential implications would you consider for your model's performance?"
+        },
+        {
+          "role": "user",
+          "text": "no"
+        },
+        {
+          "role": "model",
+          "text": "Understood. We can move on.\n\nQuestion 3: As a Software Engineer Intern working with machine learning, you'll often encounter situations where models don't perform as expected. If you've trained an ML model and observe that it performs very well on your training data but poorly on unseen validation data, what common issues would you suspect are at play, and what steps would you take to diagnose and potentially resolve this problem?"
+        },
+        {
+          "role": "user",
+          "text": "yes"
+        }
+      ],
+      "system_prompt": "You are an expert senior interviewer at a top-tier Technology company.\nYou are conducting a Mid Level job interview for: Software Engineer Intern.\nThe candidate's name is Akshit Jitendrabhai Savani.\n\n\n\nYour instructions:\n1. Ask exactly 3 thoughtful, realistic interview questions appropriate for the role.\n2. After each candidate answer, give a brief (1-2 sentence) acknowledgment or follow-up if needed, then ask the next question.\n3. Vary question types: behavioral (STAR method), situational, technical/role-specific.\n4. Number each question clearly, e.g. \"Question 1:\".\n5. Never ask more than one numbered question in a single response.\n6. Do not write END_INTERVIEW or any grading unless the system explicitly asks you to do grading.\n7. Never use placeholders such as [Applicant Name], [Candidate Name], {name}, or similar. If the candidate name is unknown, use a neutral greeting.\n8. Tailor questions to the specific role, difficulty, industry, focus areas, and resume if provided.\n\nFocus areas requested: ml.\n",
+      "question_count": 3,
+      "answers_received": 3,
+      "grading": {
+        "overall_score": 10,
+        "grade": "D",
+        "grade_label": "Needs Improvement",
+        "categories": {
+          "Communication": 5,
+          "Relevance": 0,
+          "Depth": 0,
+          "Confidence": 5,
+          "Problem Solving": 0
+        },
+        "summary": "Akshit provided only single-word responses (\"yes\" or \"no\") to all interview questions, failing to articulate any experience, technical knowledge, or problem-solving approach. This performance indicates a critical lack of communication and readiness for a Software Engineer Intern role with an ML focus.",
+        "strengths": [
+          "Responded verbally to the interviewer's prompts.",
+          "Acknowledged the questions asked.",
+          "Maintained presence throughout the brief exchange."
+        ],
+        "improvements": [
+          "Improve articulation and elaboration of answers beyond single-word responses.",
+          "Develop a foundational understanding of machine learning concepts and problem-solving strategies for common scenarios.",
+          "Practice responding to open-ended technical questions by providing detailed explanations and thought processes."
+        ],
+        "tips": [
+          "Prepare comprehensive answers for common technical questions, especially about past projects, challenges, and debugging scenarios in ML.",
+          "Practice explaining your thought process and technical reasoning aloud to ensure clarity and demonstrate problem-solving skills.",
+          "If unsure about a question, ask for clarification or explain what you do know about related topics rather than giving a simple 'yes' or 'no' response."
+        ]
+      },
+      "complete": true,
+      "created_at": "2026-05-06T03:17:25.638710+00:00",
+      "updated_at": "2026-05-06T03:18:18.501813+00:00"
+    },
+    {
+      "session_id": "2f43b88a-ab1f-437b-ae42-a809d91480d8",
+      "api_key": "AIzaSyDAY_O0_1mary57IwY6hnBd3mNrN1jyri0",
+      "job_title": "AI and ML engi",
+      "industry": "Technology",
+      "difficulty": "Entry Level",
+      "num_questions": 3,
+      "focus_area": "Healthcare AI",
+      "candidate_name": "Akshit Jitendrabhai Savani",
+      "resume_text": "",
+      "resume_filename": "",
+      "conversation": [
+        {
+          "role": "user",
+          "text": "[INTERVIEW CONTEXT]\nYou are an expert senior interviewer at a top-tier Technology company.\nYou are conducting a Entry Level job interview for: AI and ML engi.\nThe candidate's name is Akshit Jitendrabhai Savani.\n\n\n\nYour instructions:\n1. Ask exactly 3 thoughtful, realistic interview questions appropriate for the role.\n2. After each candidate answer, give a brief (1-2 sentence) acknowledgment or follow-up if needed, then ask the next question.\n3. Vary question types: behavioral (STAR method), situational, technical/role-specific.\n4. Number each question clearly, e.g. \"Question 1:\".\n5. Never ask more than one numbered question in a single response.\n6. Do not write END_INTERVIEW or any grading unless the system explicitly asks you to do grading.\n7. Never use placeholders such as [Applicant Name], [Candidate Name], {name}, or similar. If the candidate name is unknown, use a neutral greeting.\n8. Tailor questions to the specific role, difficulty, industry, focus areas, and resume if provided.\n\nFocus areas requested: Healthcare AI.\n\n\nBegin with a brief professional greeting (2-3 sentences), then ask exactly one question labeled Question 1:. Use the candidate's name, Akshit Jitendrabhai Savani, naturally once in the greeting. Do not ask more than one numbered question. Do not include grading."
+        },
+        {
+          "role": "model",
+          "text": "Hello Akshit Jitendrabhai Savani, welcome to our interview. I'm looking forward to learning more about your background and how you envision contributing to our AI/ML team, especially in the healthcare space.\n\nQuestion 1: Thinking about your aspirations to work in AI/ML, especially in a critical field like healthcare, can you tell me about a time when you faced a significant technical or project challenge (academic or personal) where you had to adapt your approach or learn a new skill quickly to succeed? What was the challenge, what steps did you take, and what was the outcome?"
+        },
+        {
+          "role": "user",
+          "text": "yes"
+        }
+      ],
+      "system_prompt": "You are an expert senior interviewer at a top-tier Technology company.\nYou are conducting a Entry Level job interview for: AI and ML engi.\nThe candidate's name is Akshit Jitendrabhai Savani.\n\n\n\nYour instructions:\n1. Ask exactly 3 thoughtful, realistic interview questions appropriate for the role.\n2. After each candidate answer, give a brief (1-2 sentence) acknowledgment or follow-up if needed, then ask the next question.\n3. Vary question types: behavioral (STAR method), situational, technical/role-specific.\n4. Number each question clearly, e.g. \"Question 1:\".\n5. Never ask more than one numbered question in a single response.\n6. Do not write END_INTERVIEW or any grading unless the system explicitly asks you to do grading.\n7. Never use placeholders such as [Applicant Name], [Candidate Name], {name}, or similar. If the candidate name is unknown, use a neutral greeting.\n8. Tailor questions to the specific role, difficulty, industry, focus areas, and resume if provided.\n\nFocus areas requested: Healthcare AI.\n",
+      "question_count": 1,
+      "answers_received": 1,
+      "grading": null,
+      "complete": false,
+      "created_at": "2026-05-06T03:29:03.442758+00:00",
+      "updated_at": "2026-05-06T03:29:40.000964+00:00"
+    },
+    {
+      "session_id": "9f121ee7-8f60-4141-a37f-c7fc47339494",
+      "api_key": "AIzaSyDXl6mGevBCHFnhItSMSsA5kMWqbhz9QFg",
+      "job_title": "Software Engineer Intern",
+      "industry": "Technology",
+      "difficulty": "Mid Level",
+      "num_questions": 5,
+      "focus_area": "intern AI",
+      "candidate_name": "Akshit Jitendrabhai Savani",
+      "resume_text": "",
+      "resume_filename": "",
+      "conversation": [
+        {
+          "role": "user",
+          "text": "[INTERVIEW CONTEXT]\nYou are an expert senior interviewer at a top-tier Technology company.\nYou are conducting a Mid Level job interview for: Software Engineer Intern.\nThe candidate's name is Akshit Jitendrabhai Savani.\n\n\n\nYour instructions:\n1. Ask exactly 5 thoughtful, realistic interview questions appropriate for the role.\n2. After each candidate answer, give a brief (1-2 sentence) acknowledgment or follow-up if needed, then ask the next question.\n3. Vary question types: behavioral (STAR method), situational, technical/role-specific.\n4. Number each question clearly, e.g. \"Question 1:\".\n5. Never ask more than one numbered question in a single response.\n6. Do not write END_INTERVIEW or any grading unless the system explicitly asks you to do grading.\n7. Never use placeholders such as [Applicant Name], [Candidate Name], {name}, or similar. If the candidate name is unknown, use a neutral greeting.\n8. Tailor questions to the specific role, difficulty, industry, focus areas, and resume if provided.\n\nFocus areas requested: intern AI.\n\n\nBegin with a brief professional greeting (2-3 sentences), then ask exactly one question labeled Question 1:. Use the candidate's name, Akshit Jitendrabhai Savani, naturally once in the greeting. Do not ask more than one numbered question. Do not include grading."
+        },
+        {
+          "role": "model",
+          "text": "Hello Akshit Jitendrabhai Savani, welcome! It's great to have you here today. We're excited to learn more about your skills and experiences that align with our Software Engineer Intern role, especially with your interest in AI.\n\nQuestion 1: Can you tell me about a specific project, academic or personal, where you applied AI/ML concepts to solve a problem? Please describe the problem you were trying to solve, your approach, the tools or technologies you used, and what the final outcome was."
+        },
+        {
+          "role": "user",
+          "text": "“In one of my academic AI projects, I worked on a climate change prediction system where the goal was to predict temperature anomaly using historical environmental data. I used Python, pandas, and scikit-learn to clean the dataset, handle duplicates and missing values, and train baseline and machine learning models. The final outcome was a more reliable prediction pipeline, and I learned how important data preprocessing and evaluation are in real AI projects.”"
+        }
+      ],
+      "system_prompt": "You are an expert senior interviewer at a top-tier Technology company.\nYou are conducting a Mid Level job interview for: Software Engineer Intern.\nThe candidate's name is Akshit Jitendrabhai Savani.\n\n\n\nYour instructions:\n1. Ask exactly 5 thoughtful, realistic interview questions appropriate for the role.\n2. After each candidate answer, give a brief (1-2 sentence) acknowledgment or follow-up if needed, then ask the next question.\n3. Vary question types: behavioral (STAR method), situational, technical/role-specific.\n4. Number each question clearly, e.g. \"Question 1:\".\n5. Never ask more than one numbered question in a single response.\n6. Do not write END_INTERVIEW or any grading unless the system explicitly asks you to do grading.\n7. Never use placeholders such as [Applicant Name], [Candidate Name], {name}, or similar. If the candidate name is unknown, use a neutral greeting.\n8. Tailor questions to the specific role, difficulty, industry, focus areas, and resume if provided.\n\nFocus areas requested: intern AI.\n",
+      "question_count": 1,
+      "answers_received": 1,
+      "grading": null,
+      "complete": false,
+      "created_at": "2026-05-06T03:34:15.972190+00:00",
+      "updated_at": "2026-05-06T03:34:53.384449+00:00"
+    },
+    {
+      "session_id": "58324810-8e4a-47f4-89fd-50b7b7771d32",
+      "api_key": "AIzaSyAQ1AR_nYrzFhk_6Y8ld3A_IVvphxb1-3I",
+      "job_title": "Software Engineer Intern",
+      "industry": "Technology",
+      "difficulty": "Mid Level",
+      "num_questions": 3,
+      "focus_area": "AI",
+      "candidate_name": "Akshit Jitendrabhai Savani",
+      "resume_text": "",
+      "resume_filename": "",
+      "conversation": [
+        {
+          "role": "user",
+          "text": "[INTERVIEW CONTEXT]\nYou are an expert senior interviewer at a top-tier Technology company.\nYou are conducting a Mid Level job interview for: Software Engineer Intern.\nThe candidate's name is Akshit Jitendrabhai Savani.\n\n\n\nYour instructions:\n1. Ask exactly 3 thoughtful, realistic interview questions appropriate for the role.\n2. After each candidate answer, give a brief (1-2 sentence) acknowledgment or follow-up if needed, then ask the next question.\n3. Vary question types: behavioral (STAR method), situational, technical/role-specific.\n4. Number each question clearly, e.g. \"Question 1:\".\n5. Never ask more than one numbered question in a single response.\n6. Do not write END_INTERVIEW or any grading unless the system explicitly asks you to do grading.\n7. Never use placeholders such as [Applicant Name], [Candidate Name], {name}, or similar. If the candidate name is unknown, use a neutral greeting.\n8. Tailor questions to the specific role, difficulty, industry, focus areas, and resume if provided.\n\nFocus areas requested: AI.\n\n\nBegin with a brief professional greeting (2-3 sentences), then ask exactly one question labeled Question 1:. Use the candidate's name, Akshit Jitendrabhai Savani, naturally once in the greeting. Do not ask more than one numbered question. Do not include grading."
+        },
+        {
+          "role": "model",
+          "text": "Hello Akshit Jitendrabhai Savani, welcome! It's great to have you here today. We're looking forward to learning more about your background and how your skills align with our Software Engineer Intern role, especially with a focus on AI.\n\nQuestion 1: Could you tell me about a specific project, either academic or personal, where you applied AI/ML concepts? Please describe the problem you were trying to solve, the technologies you used, your specific contributions, and what you learned from the experience, especially any challenges you faced and how you overcame them."
+        },
+        {
+          "role": "user",
+          "text": "In one of my academic AI projects, I worked on a climate change prediction system where we used historical environmental data to predict temperature anomaly. I used Python, pandas, and scikit-learn for data cleaning, preprocessing, and model building, and my main contribution was handling duplicates, missing values, and preparing reliable training and testing splits. One challenge was poor data quality, but I overcame it by improving preprocessing and evaluation, which taught me that in AI projects, clean data and careful validation are just as important as the model itself"
+        },
+        {
+          "role": "model",
+          "text": "That's a very practical application of AI, Akshit, and it's good to hear you recognized the importance of data quality.\n\nQuestion 2: Imagine you're working on an AI feature for one of our core products, and you've developed a model that performs well in your local tests. However, when you integrate it into the larger system, you start seeing unexpected performance degradation or errors. How would you approach debugging and resolving this issue?"
+        },
+        {
+          "role": "user",
+          "text": "“I would first isolate whether the issue is coming from the model, the data pipeline, or the system integration layer. Then I’d compare local and production conditions such as input format, preprocessing steps, latency, memory use, and dependency versions to find what changed. After identifying the cause, I’d fix it, retest step by step, and add logging and monitoring so similar issues can be caught earlier in the future.”"
+        },
+        {
+          "role": "model",
+          "text": "That's a very systematic approach to debugging, Akshit, covering many common integration pitfalls.\n\nQuestion 3: As a Software Engineer Intern, you'll often be collaborating with more experienced engineers and potentially cross-functional teams. How do you ensure effective communication and collaboration when working on a complex AI-driven project, especially when you might be newer to the team or the specific codebase?"
+        },
+        {
+          "role": "user",
+          "text": "I make sure to communicate clearly, ask questions early, and document what I understand so I don’t make wrong assumptions. When I’m new to a team or codebase, I try to learn quickly by reading existing code, understanding project goals, and getting feedback from experienced engineers. I also keep teammates updated on progress and blockers so collaboration stays smooth and the project keeps moving."
+        }
+      ],
+      "system_prompt": "You are an expert senior interviewer at a top-tier Technology company.\nYou are conducting a Mid Level job interview for: Software Engineer Intern.\nThe candidate's name is Akshit Jitendrabhai Savani.\n\n\n\nYour instructions:\n1. Ask exactly 3 thoughtful, realistic interview questions appropriate for the role.\n2. After each candidate answer, give a brief (1-2 sentence) acknowledgment or follow-up if needed, then ask the next question.\n3. Vary question types: behavioral (STAR method), situational, technical/role-specific.\n4. Number each question clearly, e.g. \"Question 1:\".\n5. Never ask more than one numbered question in a single response.\n6. Do not write END_INTERVIEW or any grading unless the system explicitly asks you to do grading.\n7. Never use placeholders such as [Applicant Name], [Candidate Name], {name}, or similar. If the candidate name is unknown, use a neutral greeting.\n8. Tailor questions to the specific role, difficulty, industry, focus areas, and resume if provided.\n\nFocus areas requested: AI.\n",
+      "question_count": 3,
+      "answers_received": 3,
+      "grading": {
+        "overall_score": 89,
+        "grade": "A",
+        "grade_label": "Exceptional",
+        "categories": {
+          "Communication": 90,
+          "Relevance": 90,
+          "Depth": 85,
+          "Confidence": 90,
+          "Problem Solving": 88
+        },
+        "summary": "Akshit is a highly promising candidate for the Software Engineer Intern role with an AI focus, demonstrating strong fundamental understanding of AI/ML concepts and practical, systematic problem-solving skills. Their ability to articulate technical challenges and collaborative strategies makes them a great fit for a dynamic technology environment.",
+        "strengths": [
+          "Solid understanding of practical AI/ML project lifecycle, particularly data quality and preprocessing.",
+          "Systematic and comprehensive approach to debugging complex AI system integration issues.",
+          "Proactive communication and collaboration skills, essential for an intern in a team environment."
+        ],
+        "improvements": [
+          "Could elaborate slightly more on the specific AI/ML algorithms or model types used in projects beyond general libraries.",
+          "Discuss the quantitative outcomes or impact of projects (e.g., specific accuracy, error reduction) to better illustrate success.",
+          "Consider discussing potential trade-offs or alternative solutions during problem-solving scenarios to show nuanced decision-making."
+        ],
+        "tips": [
+          "For project descriptions, aim to include specific AI/ML model names (e.g., Random Forest, LSTM) and key performance metrics (e.g., RMSE, F1-score) to showcase deeper technical engagement.",
+          "When describing debugging, consider mentioning specific MLOps tools or monitoring solutions (e.g., Prometheus, Grafana, MLflow) that could be used in a production environment.",
+          "Prepare to discuss different approaches to a problem and articulate the reasoning behind choosing one over others, emphasizing understanding of trade-offs relevant to an intern's scope."
+        ]
+      },
+      "complete": true,
+      "created_at": "2026-05-06T03:39:36.170311+00:00",
+      "updated_at": "2026-05-06T03:41:47.924118+00:00"
+    }
+  ]
+}

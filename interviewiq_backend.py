@@ -6,11 +6,14 @@ import re
 import threading
 import uuid
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from io import BytesIO
 from typing import Any
 
 from flask import Flask, jsonify, request, send_from_directory
 from google import genai
 from google.genai import types
+from pypdf import PdfReader
 
 
 MODEL_NAME = os.getenv("INTERVIEWIQ_MODEL", "gemini-2.5-flash")
@@ -21,6 +24,7 @@ FRONTEND_CANDIDATES = [
     "interviewiq_frontend.html",
     "interview_bot.html",
 ]
+HISTORY_FILE = os.path.join(BASE_DIR, "interviewiq_history.json")
 
 BGRADE_RE = re.compile(r"\{[\s\S]*\}")
 QUESTION_RE = re.compile(r"Question\s+(\d+)\s*[:\.\)]", re.IGNORECASE)
@@ -39,6 +43,11 @@ BLOCKED_NAME_WORDS = {
 app = Flask(__name__, static_folder=BASE_DIR)
 SESSIONS: dict[str, "InterviewSession"] = {}
 SESSIONS_LOCK = threading.Lock()
+STORE_LOCK = threading.Lock()
+
+
+def now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 @dataclass
@@ -57,12 +66,16 @@ class InterviewSession:
     num_questions: int
     focus_area: str = ""
     candidate_name: str = ""
+    resume_text: str = ""
+    resume_filename: str = ""
     conversation: list[InterviewMessage] = field(default_factory=list)
     system_prompt: str = ""
     question_count: int = 0
     answers_received: int = 0
     grading: dict[str, Any] | None = None
     complete: bool = False
+    created_at: str = field(default_factory=now_iso)
+    updated_at: str = field(default_factory=now_iso)
 
     @property
     def meta(self) -> str:
@@ -114,25 +127,68 @@ def detect_candidate_name(text: str) -> str:
     return ""
 
 
-def build_system_prompt(job_title: str, industry: str, difficulty: str, num_questions: int, focus_area: str, candidate_name: str) -> str:
+def extract_text_from_pdf(file_bytes: bytes) -> str:
+    reader = PdfReader(BytesIO(file_bytes))
+    parts: list[str] = []
+    for page in reader.pages:
+        parts.append(page.extract_text() or "")
+    return "\n".join(parts).strip()
+
+
+def extract_resume_text(filename: str, file_bytes: bytes) -> str:
+    lower_name = (filename or "").lower()
+
+    if lower_name.endswith(".txt"):
+        return file_bytes.decode("utf-8", errors="ignore").strip()
+
+    if lower_name.endswith(".pdf"):
+        return extract_text_from_pdf(file_bytes)
+
+    raise ValueError("Unsupported file type. Please upload a PDF or TXT resume.")
+
+
+def clean_resume_text(text: str, max_chars: int = 6000) -> str:
+    text = re.sub(r"\s+", " ", (text or "")).strip()
+    return text[:max_chars]
+
+
+def build_system_prompt(
+    job_title: str,
+    industry: str,
+    difficulty: str,
+    num_questions: int,
+    focus_area: str,
+    candidate_name: str,
+    resume_text: str = "",
+) -> str:
     focus = f"Focus areas requested: {focus_area}." if focus_area.strip() else ""
     candidate = f"The candidate's name is {candidate_name}." if candidate_name else "The candidate's name is not known."
-    return f"""You are an expert senior interviewer at a top-tier {industry} company.
+    resume_block = (
+        f"Candidate resume/background summary:\n{resume_text}\n\n"
+        "Use the resume to personalize questions around the candidate's actual projects, skills, tools, education, and experience. "
+        "Do not just repeat resume lines back; ask realistic interview questions based on them."
+        if resume_text.strip()
+        else ""
+    )
+
+    return f'''You are an expert senior interviewer at a top-tier {industry} company.
 You are conducting a {difficulty} job interview for: {job_title}.
 {candidate}
+
+{resume_block}
 
 Your instructions:
 1. Ask exactly {num_questions} thoughtful, realistic interview questions appropriate for the role.
 2. After each candidate answer, give a brief (1-2 sentence) acknowledgment or follow-up if needed, then ask the next question.
 3. Vary question types: behavioral (STAR method), situational, technical/role-specific.
-4. Number each question clearly, e.g. \"Question 1:\".
+4. Number each question clearly, e.g. "Question 1:".
 5. Never ask more than one numbered question in a single response.
 6. Do not write END_INTERVIEW or any grading unless the system explicitly asks you to do grading.
 7. Never use placeholders such as [Applicant Name], [Candidate Name], {{name}}, or similar. If the candidate name is unknown, use a neutral greeting.
-8. Tailor questions to the specific role, difficulty, industry, and any focus areas provided.
+8. Tailor questions to the specific role, difficulty, industry, focus areas, and resume if provided.
 
 {focus}
-"""
+'''
 
 
 def build_initial_turn(system_prompt: str, candidate_name: str) -> str:
@@ -175,7 +231,7 @@ def build_grading_prompt(session: InterviewSession) -> str:
     candidate_line = f"Candidate name: {session.candidate_name}\n" if session.candidate_name else ""
     focus_line = session.focus_area if session.focus_area else "No explicit focus areas provided."
 
-    return f"""You are evaluating a mock job interview transcript.
+    return f'''You are evaluating a mock job interview transcript.
 
 Score the candidate specifically for this interview context, not against a generic interview rubric.
 
@@ -184,8 +240,7 @@ Interview context:
 - Industry: {session.industry}
 - Difficulty level: {session.difficulty}
 - Focus areas: {focus_line}
-{candidate_line}
-Scoring guidance:
+{candidate_line}Scoring guidance:
 - Communication: clarity, structure, concision, and professionalism.
 - Relevance: how directly the answers match the role, industry, and question asked.
 - Depth: depth of examples, technical reasoning, domain knowledge, and detail expected for this level.
@@ -218,7 +273,7 @@ Return EXACTLY:
 
 Transcript:
 {transcript}
-"""
+'''
 
 
 def parse_grading(text: str) -> dict[str, Any] | None:
@@ -289,7 +344,6 @@ def sanitize_single_question_reply(reply: str, expected_question_number: int, ca
     if not matches:
         return text
 
-    first = matches[0]
     second = matches[1] if len(matches) > 1 else None
     trimmed = text[: second.start()].rstrip() if second else text
     normalized = QUESTION_RE.sub(f"Question {expected_question_number}:", trimmed, count=1)
@@ -339,6 +393,139 @@ def generate_grading(session: InterviewSession) -> tuple[str, dict[str, Any] | N
     return reply_text, grading
 
 
+def message_to_dict(message: InterviewMessage) -> dict[str, str]:
+    return {"role": message.role, "text": message.text}
+
+
+def message_from_dict(data: dict[str, Any]) -> InterviewMessage:
+    return InterviewMessage(
+        role=str(data.get("role", "user")),
+        text=str(data.get("text", "")),
+    )
+
+
+def session_to_dict(session: InterviewSession) -> dict[str, Any]:
+    return {
+        "session_id": session.session_id,
+        "api_key": session.api_key,
+        "job_title": session.job_title,
+        "industry": session.industry,
+        "difficulty": session.difficulty,
+        "num_questions": session.num_questions,
+        "focus_area": session.focus_area,
+        "candidate_name": session.candidate_name,
+        "resume_text": session.resume_text,
+        "resume_filename": session.resume_filename,
+        "conversation": [message_to_dict(m) for m in session.conversation],
+        "system_prompt": session.system_prompt,
+        "question_count": session.question_count,
+        "answers_received": session.answers_received,
+        "grading": session.grading,
+        "complete": session.complete,
+        "created_at": session.created_at,
+        "updated_at": session.updated_at,
+    }
+
+
+def session_from_dict(data: dict[str, Any]) -> InterviewSession:
+    return InterviewSession(
+        session_id=str(data.get("session_id", "")),
+        api_key=str(data.get("api_key", "")),
+        job_title=str(data.get("job_title", "")),
+        industry=str(data.get("industry", "Technology")),
+        difficulty=str(data.get("difficulty", "Mid Level")),
+        num_questions=int(data.get("num_questions", 5)),
+        focus_area=str(data.get("focus_area", "")),
+        candidate_name=str(data.get("candidate_name", "")),
+        resume_text=str(data.get("resume_text", "")),
+        resume_filename=str(data.get("resume_filename", "")),
+        conversation=[message_from_dict(m) for m in list(data.get("conversation", []))],
+        system_prompt=str(data.get("system_prompt", "")),
+        question_count=int(data.get("question_count", 0)),
+        answers_received=int(data.get("answers_received", 0)),
+        grading=data.get("grading"),
+        complete=bool(data.get("complete", False)),
+        created_at=str(data.get("created_at", now_iso())),
+        updated_at=str(data.get("updated_at", now_iso())),
+    )
+
+
+def _read_store_unlocked() -> list[dict[str, Any]]:
+    if not os.path.exists(HISTORY_FILE):
+        return []
+    try:
+        with open(HISTORY_FILE, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, json.JSONDecodeError):
+        return []
+
+    if isinstance(data, dict) and isinstance(data.get("sessions"), list):
+        return data["sessions"]
+    if isinstance(data, list):
+        return data
+    return []
+
+
+def _write_store_unlocked(records: list[dict[str, Any]]) -> None:
+    with open(HISTORY_FILE, "w", encoding="utf-8") as fh:
+        json.dump({"sessions": records}, fh, indent=2, ensure_ascii=False)
+
+
+def persist_session(session: InterviewSession) -> None:
+    session.updated_at = now_iso()
+    record = session_to_dict(session)
+    with STORE_LOCK:
+        records = _read_store_unlocked()
+        replaced = False
+        for index, existing in enumerate(records):
+            if str(existing.get("session_id")) == session.session_id:
+                records[index] = record
+                replaced = True
+                break
+        if not replaced:
+            records.append(record)
+        _write_store_unlocked(records)
+
+
+def load_session_from_store(session_id: str) -> InterviewSession | None:
+    with STORE_LOCK:
+        records = _read_store_unlocked()
+    for record in records:
+        if str(record.get("session_id")) == session_id:
+            return session_from_dict(record)
+    return None
+
+
+def get_session_by_id(session_id: str) -> InterviewSession | None:
+    with SESSIONS_LOCK:
+        existing = SESSIONS.get(session_id)
+        if existing:
+            return existing
+
+    loaded = load_session_from_store(session_id)
+    if loaded:
+        with SESSIONS_LOCK:
+            SESSIONS[session_id] = loaded
+        return loaded
+    return None
+
+
+def weakest_category_from_grading(grading: dict[str, Any] | None) -> tuple[str | None, int | None]:
+    if not grading:
+        return None, None
+    categories = grading.get("categories") or {}
+    numeric_items: list[tuple[str, int]] = []
+    for name, value in categories.items():
+        try:
+            numeric_items.append((str(name), int(value)))
+        except (TypeError, ValueError):
+            continue
+    if not numeric_items:
+        return None, None
+    numeric_items.sort(key=lambda item: item[1])
+    return numeric_items[0][0], numeric_items[0][1]
+
+
 @app.after_request
 def add_cors_headers(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
@@ -350,6 +537,7 @@ def add_cors_headers(response):
 @app.route("/api/start", methods=["OPTIONS"])
 @app.route("/api/message", methods=["OPTIONS"])
 @app.route("/api/end", methods=["OPTIONS"])
+@app.route("/api/parse_resume", methods=["OPTIONS"])
 def api_preflight():
     return ("", 204)
 
@@ -383,6 +571,109 @@ def health():
     return ok({"ok": True, "model": MODEL_NAME, "baseDir": BASE_DIR})
 
 
+@app.get("/api/history")
+def get_history():
+    with STORE_LOCK:
+        records = _read_store_unlocked()
+
+    records.sort(key=lambda item: str(item.get("updated_at", "")), reverse=True)
+
+    items: list[dict[str, Any]] = []
+    for record in records:
+        grading = record.get("grading") or {}
+        weakest_name, weakest_score = weakest_category_from_grading(grading)
+        items.append(
+            {
+                "sessionId": str(record.get("session_id", "")),
+                "jobTitle": str(record.get("job_title", "")),
+                "industry": str(record.get("industry", "")),
+                "difficulty": str(record.get("difficulty", "")),
+                "numQuestions": int(record.get("num_questions", 0)),
+                "questionCount": int(record.get("question_count", 0)),
+                "answersReceived": int(record.get("answers_received", 0)),
+                "complete": bool(record.get("complete", False)),
+                "candidateName": str(record.get("candidate_name", "")),
+                "createdAt": str(record.get("created_at", "")),
+                "updatedAt": str(record.get("updated_at", "")),
+                "overallScore": grading.get("overall_score"),
+                "grade": grading.get("grade"),
+                "summary": grading.get("summary", ""),
+                "weakestArea": weakest_name,
+                "weakestScore": weakest_score,
+                "resumeUploaded": bool(record.get("resume_filename")),
+            }
+        )
+
+    return ok({"ok": True, "items": items})
+
+
+@app.get("/api/history/<session_id>")
+def get_history_session(session_id: str):
+    session = get_session_by_id(session_id)
+    if not session:
+        return err("Session not found.", status=404, code="session_not_found")
+
+    visible_conversation = [
+        {"role": message.role, "text": message.text}
+        for message in session.conversation
+        if not (message.role == "user" and message.text.startswith("[INTERVIEW CONTEXT]"))
+    ]
+
+    return ok(
+        {
+            "ok": True,
+            "session": {
+                "sessionId": session.session_id,
+                "candidateName": session.candidate_name,
+                "jobTitle": session.job_title,
+                "industry": session.industry,
+                "difficulty": session.difficulty,
+                "numQuestions": session.num_questions,
+                "questionCount": session.question_count,
+                "answersReceived": session.answers_received,
+                "complete": session.complete,
+                "grading": session.grading,
+                "conversation": visible_conversation,
+                "focusArea": session.focus_area,
+                "resumeFilename": session.resume_filename,
+                "meta": session.meta,
+                "createdAt": session.created_at,
+                "updatedAt": session.updated_at,
+            }
+        }
+    )
+
+
+@app.post("/api/parse_resume")
+def parse_resume():
+    if "resume" not in request.files:
+        return err("Resume file is required.")
+
+    uploaded = request.files["resume"]
+    if not uploaded or not uploaded.filename:
+        return err("Please choose a resume file.")
+
+    try:
+        file_bytes = uploaded.read()
+        resume_text = clean_resume_text(extract_resume_text(uploaded.filename, file_bytes))
+    except ValueError as exc:
+        return err(str(exc))
+    except Exception as exc:
+        return err(f"Could not read resume: {exc}", status=400, code="resume_parse_failed")
+
+    if not resume_text:
+        return err("Resume file was read, but no text could be extracted.", status=400, code="empty_resume")
+
+    return ok(
+        {
+            "ok": True,
+            "filename": uploaded.filename,
+            "resumeText": resume_text,
+            "preview": resume_text[:400],
+        }
+    )
+
+
 @app.post("/api/start")
 def start_interview():
     data = request.get_json(silent=True) or {}
@@ -393,6 +684,8 @@ def start_interview():
     difficulty = normalize_difficulty(str(data.get("difficulty", "Mid Level")))
     focus_area = str(data.get("focusArea", "")).strip()
     candidate_name = clean_candidate_name(str(data.get("candidateName", "")).strip())
+    resume_text = clean_resume_text(str(data.get("resumeText", "")).strip())
+    resume_filename = str(data.get("resumeFilename", "")).strip()
 
     try:
         num_questions = int(data.get("numQuestions", 5))
@@ -406,7 +699,16 @@ def start_interview():
     if num_questions not in {3, 5, 8, 10}:
         return err("Number of questions must be one of: 3, 5, 8, 10.")
 
-    system_prompt = build_system_prompt(job_title, industry, difficulty, num_questions, focus_area, candidate_name)
+    system_prompt = build_system_prompt(
+        job_title,
+        industry,
+        difficulty,
+        num_questions,
+        focus_area,
+        candidate_name,
+        resume_text,
+    )
+
     session = InterviewSession(
         session_id=str(uuid.uuid4()),
         api_key=api_key,
@@ -416,6 +718,8 @@ def start_interview():
         num_questions=num_questions,
         focus_area=focus_area,
         candidate_name=candidate_name,
+        resume_text=resume_text,
+        resume_filename=resume_filename,
         system_prompt=system_prompt,
     )
 
@@ -431,6 +735,8 @@ def start_interview():
 
     with SESSIONS_LOCK:
         SESSIONS[session.session_id] = session
+
+    persist_session(session)
 
     return ok(
         {
@@ -458,8 +764,7 @@ def send_message():
     if not message:
         return err("Please enter a message.")
 
-    with SESSIONS_LOCK:
-        session = SESSIONS.get(session_id)
+    session = get_session_by_id(session_id)
 
     if not session:
         return err("Session not found.", status=404, code="session_not_found")
@@ -472,6 +777,7 @@ def send_message():
 
     session.conversation.append(InterviewMessage(role="user", text=message))
     session.answers_received += 1
+    persist_session(session)
 
     if session.answers_received >= session.num_questions:
         try:
@@ -489,6 +795,8 @@ def send_message():
         session.complete = True
         session.question_count = session.num_questions
         session.grading = grading
+        persist_session(session)
+
         return ok(
             {
                 "ok": True,
@@ -508,6 +816,7 @@ def send_message():
 
     session.conversation.append(InterviewMessage(role="model", text=reply))
     session.question_count = session.answers_received + 1
+    persist_session(session)
 
     return ok(
         {
@@ -530,13 +839,20 @@ def end_interview():
     if not session_id:
         return err("Session ID is required.")
 
-    with SESSIONS_LOCK:
-        session = SESSIONS.get(session_id)
+    session = get_session_by_id(session_id)
 
     if not session:
         return err("Session not found.", status=404, code="session_not_found")
     if session.complete:
-        return ok({"ok": True, "done": True, "grading": session.grading, "reply": "", "candidateName": session.candidate_name})
+        return ok(
+            {
+                "ok": True,
+                "done": True,
+                "grading": session.grading,
+                "reply": "",
+                "candidateName": session.candidate_name,
+            }
+        )
 
     try:
         reply_text, grading = generate_grading(session)
@@ -553,8 +869,17 @@ def end_interview():
     session.complete = True
     session.question_count = min(session.question_count, session.num_questions)
     session.grading = grading
+    persist_session(session)
 
-    return ok({"ok": True, "done": True, "reply": reply_text, "grading": grading, "candidateName": session.candidate_name})
+    return ok(
+        {
+            "ok": True,
+            "done": True,
+            "reply": reply_text,
+            "grading": grading,
+            "candidateName": session.candidate_name,
+        }
+    )
 
 
 if __name__ == "__main__":

@@ -49,14 +49,27 @@
   .screen { display: none; flex-direction: column; width: 100%; min-height: 100dvh; position: relative; z-index: 1; }
   .screen.active { display: flex; }
 
-  #setup-screen { align-items: center; justify-content: flex-start; padding: 40px 20px; overflow-y: auto; }
+  #setup-screen,
+  #results-screen,
+  #history-screen {
+    align-items: center;
+    justify-content: flex-start;
+    padding: 40px 20px;
+    overflow-y: auto;
+  }
 
   .logo-area { text-align: center; margin-bottom: 48px; }
   .logo-badge {
-    width: 64px; height: 64px; margin: 0 auto 16px;
-    display: flex; align-items: center; justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border-radius: 16px; font-size: 28px; box-shadow: 0 0 40px var(--glow);
+    border-radius: 16px;
+    font-size: 28px;
+    box-shadow: 0 0 40px var(--glow);
   }
   h1.brand {
     font-family: 'Playfair Display', serif;
@@ -75,17 +88,32 @@
     text-transform: uppercase;
     margin-top: 6px;
   }
-  .setup-card {
+
+  .setup-card,
+  .history-inner,
+  .results-inner {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 20px;
     padding: 40px;
     width: 100%;
-    max-width: 580px;
+    max-width: 760px;
     box-shadow: 0 20px 60px rgba(0,0,0,.5);
   }
-  .setup-card h2 { font-family: 'Playfair Display', serif; font-size: 1.4rem; margin-bottom: 8px; }
-  .setup-card p { color: var(--text-dim); font-size: .92rem; line-height: 1.6; margin-bottom: 22px; }
+
+  .setup-card h2,
+  .history-inner h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    margin-bottom: 8px;
+  }
+  .setup-card p,
+  .history-subtext {
+    color: var(--text-dim);
+    font-size: .92rem;
+    line-height: 1.6;
+    margin-bottom: 22px;
+  }
 
   .api-note, .status-note {
     border-radius: 10px;
@@ -115,7 +143,12 @@
     color: var(--text-dim);
     margin-bottom: 8px;
   }
-  input[type="text"], input[type="password"], select, textarea {
+
+  input[type="text"],
+  input[type="password"],
+  input[type="file"],
+  select,
+  textarea {
     width: 100%;
     background: var(--surface2);
     border: 1px solid var(--border);
@@ -128,11 +161,24 @@
     transition: border-color .2s, box-shadow .2s;
     margin-bottom: 20px;
   }
-  input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
-  textarea { resize: vertical; min-height: 90px; }
-  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
-  .btn-primary, .btn-restart {
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--glow);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 90px;
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .btn-primary, .btn-secondary, .btn-restart, .btn-coach {
     width: 100%;
     border-radius: 10px;
     padding: 14px 24px;
@@ -143,14 +189,49 @@
     cursor: pointer;
     transition: opacity .2s, transform .1s;
   }
+
   .btn-primary {
     background: linear-gradient(135deg, var(--accent), #d4b07a);
     color: #0a0a0f;
     border: none;
   }
-  .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
-  .btn-primary:hover, .btn-restart:hover { opacity: .9; }
-  .btn-primary:active, .btn-restart:active { transform: scale(.98); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+  .btn-restart {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+  }
+  .btn-coach {
+    background: linear-gradient(135deg, #6b5be8, #8c79ff);
+    color: white;
+    border: none;
+  }
+
+  .btn-primary:disabled,
+  .btn-secondary:disabled,
+  .btn-coach:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+  }
+
+  .btn-primary:hover, .btn-secondary:hover, .btn-restart:hover, .btn-coach:hover {
+    opacity: .9;
+  }
+
+  .btn-primary:active, .btn-secondary:active, .btn-restart:active, .btn-coach:active {
+    transform: scale(.98);
+  }
+
+  .button-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
 
   #error-msg {
     display: none;
@@ -161,7 +242,12 @@
     margin-bottom: 14px;
   }
 
-  #interview-screen { flex-direction: column; height: 100dvh; min-height: 100dvh; overflow: hidden; }
+  #interview-screen {
+    flex-direction: column;
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
   .interview-header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
@@ -172,14 +258,45 @@
     gap: 16px;
     flex-shrink: 0;
   }
-  .header-left { display: flex; align-items: center; gap: 12px; }
-  .header-brand { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: var(--accent); }
-  .interview-meta { font-family: 'IBM Plex Mono', monospace; font-size: .7rem; color: var(--text-dim); }
-  .progress-area { display: flex; align-items: center; gap: 12px; }
-  .q-counter { font-family: 'IBM Plex Mono', monospace; font-size: .72rem; color: var(--text-dim); }
-  .progress-dots { display: flex; gap: 5px; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
-  .dot.done, .dot.active { background: var(--accent); }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .interview-meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .7rem;
+    color: var(--text-dim);
+  }
+  .progress-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .q-counter {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .72rem;
+    color: var(--text-dim);
+  }
+  .progress-dots {
+    display: flex;
+    gap: 5px;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+  .dot.done, .dot.active {
+    background: var(--accent);
+  }
   .btn-end {
     background: transparent;
     border: 1px solid var(--border);
@@ -203,14 +320,33 @@
     gap: 20px;
     overscroll-behavior: contain;
   }
-  .msg { display: flex; gap: 14px; max-width: 820px; width: 100%; margin: 0 auto; }
-  .msg.user { flex-direction: row-reverse; }
-  .avatar {
-    width: 36px; height: 36px; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
+  .msg {
+    display: flex;
+    gap: 14px;
+    max-width: 820px;
+    width: 100%;
+    margin: 0 auto;
   }
-  .avatar.ai { background: linear-gradient(135deg, var(--accent2), #9b8fd4); }
-  .avatar.user-av { background: linear-gradient(135deg, #2a2a3f, #3a3a55); border: 1px solid var(--border); }
+  .msg.user {
+    flex-direction: row-reverse;
+  }
+  .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .avatar.ai {
+    background: linear-gradient(135deg, var(--accent2), #9b8fd4);
+  }
+  .avatar.user-av {
+    background: linear-gradient(135deg, #2a2a3f, #3a3a55);
+    border: 1px solid var(--border);
+  }
   .bubble {
     max-width: calc(100% - 50px);
     padding: 14px 18px;
@@ -219,71 +355,394 @@
     line-height: 1.65;
     white-space: pre-wrap;
   }
-  .msg.ai .bubble { background: var(--surface); border: 1px solid var(--border); border-top-left-radius: 4px; }
-  .msg.user .bubble { background: linear-gradient(135deg, #1e1e35, #252540); border: 1px solid #3a3a5a; border-top-right-radius: 4px; }
+  .msg.ai .bubble {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top-left-radius: 4px;
+  }
+  .msg.user .bubble {
+    background: linear-gradient(135deg, #1e1e35, #252540);
+    border: 1px solid #3a3a5a;
+    border-top-right-radius: 4px;
+  }
 
-  .typing-indicator { display: flex; gap: 5px; align-items: center; padding: 6px 0; }
-  .typing-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-dim); animation: pulse 1.2s infinite; }
+  .typing-indicator {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    padding: 6px 0;
+  }
+  .typing-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    animation: pulse 1.2s infinite;
+  }
   .typing-dot:nth-child(2) { animation-delay: .2s; }
   .typing-dot:nth-child(3) { animation-delay: .4s; }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
 
-  .input-area { background: var(--surface); border-top: 1px solid var(--border); padding: 16px 20px; flex-shrink: 0; }
-  .input-row { display: flex; gap: 10px; max-width: 820px; margin: 0 auto; align-items: flex-end; }
-  .input-wrap {
-    flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px;
-    display: flex; align-items: flex-end; padding: 4px 4px 4px 16px;
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .35; }
   }
-  .input-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+
+  .input-area {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 16px 20px;
+    flex-shrink: 0;
+  }
+  .input-row {
+    display: flex;
+    gap: 10px;
+    max-width: 820px;
+    margin: 0 auto;
+    align-items: flex-end;
+  }
+  .input-wrap {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    align-items: flex-end;
+    padding: 4px 4px 4px 16px;
+  }
+  .input-wrap:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--glow);
+  }
   #user-input {
-    flex: 1; background: transparent; border: none; outline: none; color: var(--text);
-    font-family: 'IBM Plex Sans', sans-serif; font-size: .92rem; resize: none;
-    max-height: 120px; min-height: 42px; padding: 10px 0; line-height: 1.5;
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: .92rem;
+    resize: none;
+    max-height: 120px;
+    min-height: 42px;
+    padding: 10px 0;
+    line-height: 1.5;
   }
   .send-btn {
-    background: linear-gradient(135deg, var(--accent), #d4b07a); border: none; border-radius: 9px;
-    width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+    background: linear-gradient(135deg, var(--accent), #d4b07a);
+    border: none;
+    border-radius: 9px;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
   }
-  .send-btn:disabled { opacity: .3; cursor: not-allowed; }
-  .send-btn svg { width: 18px; height: 18px; fill: #0a0a0f; }
-  .input-hint { text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: .65rem; color: var(--text-dim); margin-top: 8px; }
+  .send-btn:disabled {
+    opacity: .3;
+    cursor: not-allowed;
+  }
+  .send-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: #0a0a0f;
+  }
+  .input-hint {
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .65rem;
+    color: var(--text-dim);
+    margin-top: 8px;
+  }
 
-  #results-screen { overflow-y: auto; padding: 40px 20px; align-items: center; justify-content: flex-start; }
-  .results-inner { width: 100%; max-width: 700px; }
-  .results-header { text-align: center; margin-bottom: 40px; }
-  .results-header h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 900; margin-bottom: 8px; }
-  .results-header p { color: var(--text-dim); font-size: .875rem; }
-  .score-ring-area { display: flex; justify-content: center; margin-bottom: 36px; }
-  .score-ring-wrap { position: relative; width: 160px; height: 160px; }
-  .score-ring-wrap svg { transform: rotate(-90deg); width: 160px; height: 160px; }
-  .score-ring-bg { fill: none; stroke: var(--border); stroke-width: 10; }
-  .score-ring-fill { fill: none; stroke-width: 10; stroke-linecap: round; }
-  .score-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  .score-num { font-family: 'Playfair Display', serif; font-size: 2.8rem; font-weight: 900; }
-  .score-label { font-family: 'IBM Plex Mono', monospace; font-size: .65rem; color: var(--text-dim); letter-spacing: 2px; }
-  .grade-badge { display: inline-block; padding: 6px 18px; border-radius: 999px; font-family: 'IBM Plex Mono', monospace; font-size: .8rem; margin-top: 10px; }
+  .results-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .results-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-weight: 900;
+    margin-bottom: 8px;
+  }
+  .results-header p {
+    color: var(--text-dim);
+    font-size: .875rem;
+  }
+
+  .score-ring-area {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 36px;
+  }
+  .score-ring-wrap {
+    position: relative;
+    width: 160px;
+    height: 160px;
+  }
+  .score-ring-wrap svg {
+    transform: rotate(-90deg);
+    width: 160px;
+    height: 160px;
+  }
+  .score-ring-bg {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 10;
+  }
+  .score-ring-fill {
+    fill: none;
+    stroke-width: 10;
+    stroke-linecap: round;
+  }
+  .score-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .score-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.8rem;
+    font-weight: 900;
+  }
+  .score-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .65rem;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+  }
+  .grade-badge {
+    display: inline-block;
+    padding: 6px 18px;
+    border-radius: 999px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .8rem;
+    margin-top: 10px;
+  }
   .grade-A { background: rgba(74,222,128,.15); color: var(--green); border: 1px solid rgba(74,222,128,.3); }
   .grade-B { background: rgba(200,169,110,.15); color: var(--accent); border: 1px solid rgba(200,169,110,.3); }
   .grade-C { background: rgba(251,191,36,.15); color: var(--yellow); border: 1px solid rgba(251,191,36,.3); }
   .grade-D { background: rgba(248,113,113,.15); color: var(--red); border: 1px solid rgba(248,113,113,.3); }
-  .categories-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-  .cat-card, .feedback-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
-  .cat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .cat-name { font-family: 'IBM Plex Mono', monospace; font-size: .7rem; text-transform: uppercase; color: var(--text-dim); }
-  .cat-score { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; }
-  .cat-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
-  .cat-bar-fill { height: 100%; border-radius: 2px; }
-  .feedback-section { margin-bottom: 16px; }
-  .feedback-section h3 { font-family: 'IBM Plex Mono', monospace; font-size: .72rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 14px; }
-  .feedback-section ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-  .feedback-section li { line-height: 1.55; display: flex; gap: 10px; }
-  .feedback-section li::before { content: '▸'; color: var(--accent); }
-  .summary-text { line-height: 1.7; }
-  .btn-restart { background: transparent; border: 1px solid var(--accent); color: var(--accent); margin-top: 24px; }
+
+  .categories-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .cat-card, .feedback-section, .coach-card, .history-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+  }
+  .cat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .cat-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .7rem;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .cat-score {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+  .cat-bar-bg {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .cat-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+  }
+
+  .coach-card {
+    margin-bottom: 16px;
+    border-color: rgba(123,104,238,.35);
+    background: linear-gradient(180deg, rgba(123,104,238,.08), rgba(18,18,26,1));
+  }
+  .coach-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .72rem;
+    text-transform: uppercase;
+    color: #b8adff;
+    margin-bottom: 12px;
+  }
+  .coach-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .coach-area {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+  }
+  .coach-copy {
+    margin-top: 6px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .coach-score {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .coach-drill {
+    display: none;
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 12px;
+    background: rgba(123,104,238,.08);
+    border: 1px solid rgba(123,104,238,.22);
+    line-height: 1.65;
+  }
+  .coach-drill.active {
+    display: block;
+  }
+
+  .feedback-section {
+    margin-bottom: 16px;
+  }
+  .feedback-section h3 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .72rem;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+  .feedback-section ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .feedback-section li {
+    line-height: 1.55;
+    display: flex;
+    gap: 10px;
+  }
+  .feedback-section li::before {
+    content: '▸';
+    color: var(--accent);
+  }
+  .summary-text {
+    line-height: 1.7;
+  }
+
+  .resource-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(200,169,110,.25);
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .66rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .history-card-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 10px;
+  }
+  .history-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .history-meta {
+    color: var(--text-dim);
+    font-size: .85rem;
+    line-height: 1.6;
+  }
+  .history-status {
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .68rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    height: fit-content;
+  }
+  .status-complete {
+    background: rgba(74,222,128,.12);
+    color: var(--green);
+    border: 1px solid rgba(74,222,128,.28);
+  }
+  .status-inprogress {
+    background: rgba(251,191,36,.12);
+    color: var(--yellow);
+    border: 1px solid rgba(251,191,36,.28);
+  }
+  .history-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .history-chip {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: .75rem;
+  }
+  .history-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .history-actions .btn-primary,
+  .history-actions .btn-secondary {
+    width: auto;
+    padding: 10px 14px;
+    font-size: .72rem;
+  }
+  .empty-history {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 28px 18px;
+    border: 1px dashed var(--border);
+    border-radius: 14px;
+  }
 
   @media (max-width: 760px) {
-    .field-row, .categories-grid { grid-template-columns: 1fr; }
-    .interview-header { flex-wrap: wrap; }
+    .field-row, .categories-grid, .button-row {
+      grid-template-columns: 1fr;
+    }
+    .interview-header,
+    .coach-row,
+    .history-card-top {
+      flex-direction: column;
+    }
   }
 </style>
 </head>
@@ -297,7 +756,7 @@
 
   <div class="setup-card">
     <h2>Configure Your Interview</h2>
-    <p>This version connects your HTML UI to a local Python backend. Enter your Gemini API key, then start a role-specific mock interview.</p>
+    <p>This version connects your HTML UI to a local Python backend. Enter your Gemini API key, upload an optional resume, then start a role-specific mock interview.</p>
 
     <div class="status-note" id="backend-status">Checking local backend…</div>
     <div class="api-note">🔑 Your Gemini API key is sent only to your local Python server at <strong>http://127.0.0.1:5000</strong>. It is not stored in the page.</div>
@@ -307,6 +766,11 @@
 
     <label for="candidate-name">Candidate Name (optional)</label>
     <input type="text" id="candidate-name" placeholder="e.g. Alex Johnson" autocomplete="name">
+
+    <label for="resume-file">Upload Resume (optional)</label>
+    <input type="file" id="resume-file" accept=".pdf,.txt">
+    <button type="button" class="btn-secondary" id="upload-resume-btn">Upload Resume</button>
+    <div class="status-note" id="resume-status" style="display:none;"></div>
 
     <label for="job-title">Job Title / Role</label>
     <input type="text" id="job-title" placeholder="e.g. Senior Software Engineer">
@@ -347,10 +811,32 @@
     </select>
 
     <label for="focus-area">Focus Areas (optional)</label>
-    <textarea id="focus-area" placeholder="e.g. system design, leadership, conflict resolution"></textarea>
+    <textarea id="focus-area" placeholder="e.g. machine learning, projects, communication"></textarea>
 
     <div id="error-msg"></div>
-    <button class="btn-primary" id="start-btn">Begin Interview →</button>
+
+    <div class="button-row">
+      <button class="btn-primary" id="start-btn">Begin Interview →</button>
+      <button class="btn-secondary" id="history-btn">View History</button>
+    </div>
+  </div>
+</div>
+
+<div id="history-screen" class="screen">
+  <div class="history-inner">
+    <div class="results-header">
+      <h2>Interview History</h2>
+      <p class="history-subtext">View past interviews, reopen old results, or resume an unfinished session.</p>
+    </div>
+
+    <div class="feedback-section">
+      <h3>Saved Sessions</h3>
+      <div id="history-list" class="history-list"></div>
+    </div>
+
+    <div class="button-row">
+      <button class="btn-restart" id="back-from-history-btn">← Back to Setup</button>
+    </div>
   </div>
 </div>
 
@@ -363,10 +849,12 @@
         <div class="interview-meta" id="interview-meta"></div>
       </div>
     </div>
+
     <div class="progress-area">
       <span class="q-counter" id="q-counter">0 / 0</span>
       <div class="progress-dots" id="progress-dots"></div>
     </div>
+
     <button class="btn-end" id="end-btn">End & Grade</button>
   </div>
 
@@ -408,6 +896,19 @@
 
     <div class="categories-grid" id="categories-grid"></div>
 
+    <div class="coach-card">
+      <div class="coach-label">Weakest Area Coach</div>
+      <div class="coach-row">
+        <div>
+          <div class="coach-area" id="weakest-area-name">—</div>
+          <p class="coach-copy" id="weakest-area-message">Complete an interview to see your recommended practice area.</p>
+        </div>
+        <div class="coach-score" id="weakest-area-score">— / 100</div>
+      </div>
+      <button class="btn-coach" id="practice-drill-btn">Start Practice Drill</button>
+      <div class="coach-drill" id="practice-drill-box"></div>
+    </div>
+
     <div class="feedback-section">
       <h3>Overall Summary</h3>
       <p class="summary-text" id="summary-text"></p>
@@ -428,7 +929,20 @@
       <ul id="tips-list"></ul>
     </div>
 
-    <button class="btn-restart" id="restart-btn">← Start New Interview</button>
+    <div class="feedback-section">
+      <h3>Recommended Resources</h3>
+      <ul id="resources-list"></ul>
+    </div>
+
+    <div class="feedback-section">
+      <h3>Personalized Improvement Plan</h3>
+      <ul id="improvement-plan-list"></ul>
+    </div>
+
+    <div class="button-row">
+      <button class="btn-restart" id="download-report-btn">↓ Download Report Card</button>
+      <button class="btn-restart" id="restart-btn">← Start New Interview</button>
+    </div>
   </div>
 </div>
 
@@ -447,6 +961,99 @@ let state = {
   numQuestions: 5,
   questionCount: 0,
   isBusy: false,
+  resumeText: '',
+  resumeFilename: '',
+};
+
+let latestGrading = null;
+
+const practiceDrills = {
+  Communication: {
+    message: 'Your answers may need clearer structure, smoother wording, or a stronger beginning and ending.',
+    drill: 'Give a 60-second answer using this structure: 1) direct answer, 2) quick example, 3) result, 4) what you learned. Record yourself or time yourself while practicing.'
+  },
+  Relevance: {
+    message: 'Your answers may need to connect more directly to the role, industry, or exact question being asked.',
+    drill: 'Pick one previous answer and rewrite it so every sentence connects back to the job. Mention the role, the skill being tested, and why your example proves you can do the work.'
+  },
+  Depth: {
+    message: 'Your answers may need more detail, stronger examples, measurable results, or deeper reasoning.',
+    drill: 'Answer one previous question again, but add a specific example, the challenge, your exact actions, a measurable result, and what you would improve next time.'
+  },
+  Confidence: {
+    message: 'Your answers may need more ownership, decisiveness, and fewer uncertain phrases.',
+    drill: 'Practice the same answer again while removing phrases like "maybe," "I think," and "I guess." Use confident phrases such as "I decided," "I led," "I solved," and "the result was."'
+  },
+  'Problem Solving': {
+    message: 'Your answers may need stronger reasoning about tradeoffs, constraints, decisions, and outcomes.',
+    drill: 'Take one technical or situational question and explain your process step by step: problem, constraints, options, tradeoffs, decision, result, and what you learned.'
+  }
+};
+
+const recommendedResources = {
+  Communication: [
+    'Book: Talk Like TED by Carmine Gallo',
+    'Video: STAR Method interview answer videos on YouTube',
+    'Practice: Record 60-second answers and review your structure and clarity',
+    'Resource: Behavioral interview question lists for mock speaking practice'
+  ],
+  Relevance: [
+    'Guide: Role-specific interview question sets for your target position',
+    'Practice: Rewrite answers to connect every example directly to the job description',
+    'Video: How to tailor interview answers to the role and company',
+    'Resource: Review internship/job posting keywords before mock interviews'
+  ],
+  Depth: [
+    'Book: Cracking the Coding Interview or a role-specific technical prep book',
+    'Course: Deepen one weak technical area through a structured online course',
+    'Practice: Prepare project deep dives with challenge, approach, tools, and results',
+    'Resource: Official docs for the frameworks and tools you mention in interviews'
+  ],
+  Confidence: [
+    'Practice: Record mock interviews and remove hesitant phrases',
+    'Video: Interview confidence and body-language coaching videos',
+    'Exercise: Practice answers standing up and speaking in one clear take',
+    'Resource: Timed mock interview drills with a friend or mentor'
+  ],
+  'Problem Solving': [
+    'Practice: LeetCode or HackerRank for structured problem-solving',
+    'Book: Grokking Algorithms or similar beginner-friendly problem-solving books',
+    'Video: Step-by-step technical interview problem-solving walkthroughs',
+    'Exercise: Explain tradeoffs, constraints, and decisions out loud after solving'
+  ]
+};
+
+const improvementPlans = {
+  Communication: [
+    'Day 1: Watch one STAR-method video and note the answer structure',
+    'Day 2: Write 3 interview answers using Situation, Task, Action, Result',
+    'Day 3: Record 2 one-minute answers and improve clarity',
+    'Day 4: Retry one practice drill focusing only on smoother wording'
+  ],
+  Relevance: [
+    'Day 1: Read the job description and list the top 5 required skills',
+    'Day 2: Match one project/example to each required skill',
+    'Day 3: Rewrite 3 answers so they clearly fit the target role',
+    'Day 4: Practice answering "Why are you a fit for this role?" in 45 seconds'
+  ],
+  Depth: [
+    'Day 1: Pick one project and write a deeper technical explanation',
+    'Day 2: Add tools, frameworks, metrics, and challenges to that explanation',
+    'Day 3: Practice answering follow-up technical questions on the same project',
+    'Day 4: Review one core technical topic you mention in interviews'
+  ],
+  Confidence: [
+    'Day 1: Identify filler phrases like "maybe" or "I think" in your answers',
+    'Day 2: Practice the same answers using stronger ownership language',
+    'Day 3: Do a timed mock interview with camera on',
+    'Day 4: Repeat one difficult answer until you can say it clearly in one take'
+  ],
+  'Problem Solving': [
+    'Day 1: Solve one easy problem and explain your thinking aloud',
+    'Day 2: Solve one medium problem and discuss tradeoffs',
+    'Day 3: Practice a debugging or system-thinking question',
+    'Day 4: Retry a practice drill while explicitly stating constraints and decisions'
+  ]
 };
 
 function showScreen(id) {
@@ -471,6 +1078,11 @@ function setBusy(isBusy) {
   document.getElementById('send-btn').disabled = isBusy;
   document.getElementById('user-input').disabled = isBusy;
   document.getElementById('start-btn').disabled = isBusy;
+
+  const uploadBtn = document.getElementById('upload-resume-btn');
+  const resumeFile = document.getElementById('resume-file');
+  if (uploadBtn) uploadBtn.disabled = isBusy;
+  if (resumeFile) resumeFile.disabled = isBusy;
 }
 
 function buildProgressDots() {
@@ -520,7 +1132,13 @@ function showTyping() {
   msg.id = 'typing-msg';
   msg.innerHTML = `
     <div class="avatar ai">🤖</div>
-    <div class="bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+    <div class="bubble">
+      <div class="typing-indicator">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+    </div>`;
   chat.appendChild(msg);
   chat.scrollTop = chat.scrollHeight;
 }
@@ -543,6 +1161,15 @@ async function api(path, body) {
   return data;
 }
 
+async function apiGet(path) {
+  const res = await fetch(`${API_BASE}${path}`);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.ok === false) {
+    throw new Error(data?.error?.message || `Request failed (${res.status})`);
+  }
+  return data;
+}
+
 async function checkBackend() {
   const el = document.getElementById('backend-status');
   try {
@@ -557,12 +1184,51 @@ async function checkBackend() {
   }
 }
 
+async function uploadResume() {
+  const fileInput = document.getElementById('resume-file');
+  const statusEl = document.getElementById('resume-status');
+  const file = fileInput.files[0];
+
+  if (!file) {
+    statusEl.style.display = 'block';
+    statusEl.textContent = 'Please choose a PDF or TXT resume first.';
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('resume', file);
+
+  statusEl.style.display = 'block';
+  statusEl.textContent = 'Uploading and parsing resume...';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/parse_resume`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) {
+      throw new Error(data?.error?.message || 'Resume upload failed.');
+    }
+
+    state.resumeText = data.resumeText || '';
+    state.resumeFilename = data.filename || file.name;
+    statusEl.textContent = `Resume uploaded: ${state.resumeFilename}`;
+  } catch (err) {
+    state.resumeText = '';
+    state.resumeFilename = '';
+    statusEl.textContent = `Resume upload failed: ${err.message}`;
+  }
+}
+
 async function startInterview() {
   clearError();
 
   const apiKey = document.getElementById('api-key').value.trim();
   const candidateName = document.getElementById('candidate-name').value.trim();
   const jobTitle = document.getElementById('job-title').value.trim();
+
   if (!apiKey) return showError('Please enter your Gemini API key.');
   if (!jobTitle) return showError('Please enter a job title.');
 
@@ -583,10 +1249,13 @@ async function startInterview() {
       difficulty: state.difficulty,
       numQuestions: state.numQuestions,
       focusArea: document.getElementById('focus-area').value.trim(),
+      resumeText: state.resumeText,
+      resumeFilename: state.resumeFilename,
     });
 
     state.sessionId = data.sessionId;
-    document.getElementById('interview-meta').textContent = data.meta || [state.candidateName, state.jobTitle, state.industry, state.difficulty].filter(Boolean).join(' · ');
+    document.getElementById('interview-meta').textContent =
+      data.meta || [state.candidateName, state.jobTitle, state.industry, state.difficulty].filter(Boolean).join(' · ');
     document.getElementById('chat-area').innerHTML = '';
     buildProgressDots();
     updateProgress(data.questionCount || 1);
@@ -648,15 +1317,111 @@ async function endInterviewEarly() {
   }
 }
 
+function getWeakestCategory(categories) {
+  const entries = Object.entries(categories || {}).filter(([, value]) => Number.isFinite(Number(value)));
+  if (!entries.length) return null;
+  entries.sort((a, b) => Number(a[1]) - Number(b[1]));
+  return { name: entries[0][0], score: Number(entries[0][1]) };
+}
+
+function updateWeakestAreaCoach(grading) {
+  const weakest = getWeakestCategory(grading.categories);
+  const nameEl = document.getElementById('weakest-area-name');
+  const scoreEl = document.getElementById('weakest-area-score');
+  const messageEl = document.getElementById('weakest-area-message');
+  const drillBox = document.getElementById('practice-drill-box');
+
+  drillBox.classList.remove('active');
+  drillBox.innerHTML = '';
+
+  if (!weakest) {
+    nameEl.textContent = 'Not available';
+    scoreEl.textContent = '— / 100';
+    messageEl.textContent = 'The category scores were not available, so a weakest area could not be detected.';
+    return;
+  }
+
+  const drillInfo = practiceDrills[weakest.name] || {
+    message: 'This was your lowest category, so it is the best area to practice next.',
+    drill: 'Review one previous answer and improve it by adding a clearer example, stronger reasoning, and a specific result.'
+  };
+
+  nameEl.textContent = weakest.name;
+  scoreEl.textContent = `${weakest.score} / 100`;
+  messageEl.textContent = `Your lowest score was ${weakest.name}. ${drillInfo.message}`;
+}
+
+function showPracticeDrill() {
+  if (!latestGrading) return;
+  const weakest = getWeakestCategory(latestGrading.categories);
+  if (!weakest) return;
+
+  const drillInfo = practiceDrills[weakest.name] || {
+    drill: 'Review one previous answer and improve it by adding a clearer example, stronger reasoning, and a specific result.'
+  };
+
+  const drillBox = document.getElementById('practice-drill-box');
+  drillBox.innerHTML = `<strong>Practice Drill for ${weakest.name}:</strong><br>${drillInfo.drill}`;
+  drillBox.classList.add('active');
+}
+
+function fillList(id, items, usePills = false) {
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+
+  (items || []).forEach(item => {
+    const li = document.createElement('li');
+
+    if (usePills && item.includes(':')) {
+      const [type, ...rest] = item.split(':');
+      const pill = document.createElement('span');
+      pill.className = 'resource-pill';
+      pill.textContent = type.trim();
+
+      const text = document.createElement('span');
+      text.textContent = rest.join(':').trim();
+
+      li.appendChild(pill);
+      li.appendChild(text);
+    } else {
+      li.textContent = item;
+    }
+
+    el.appendChild(li);
+  });
+}
+
+function updateResourcesAndPlan(grading) {
+  const weakest = getWeakestCategory(grading.categories);
+  const categoryName = weakest?.name || 'Communication';
+
+  const resources = recommendedResources[categoryName] || [
+    'Book: Choose one interview-prep book for your target role',
+    'Video: Watch one mock interview breakdown video',
+    'Practice: Redo one answer and focus on clarity and structure'
+  ];
+
+  const plan = improvementPlans[categoryName] || [
+    'Day 1: Review your weakest answer',
+    'Day 2: Rewrite it with better structure',
+    'Day 3: Practice speaking it out loud',
+    'Day 4: Retry a mock interview question'
+  ];
+
+  fillList('resources-list', resources, true);
+  fillList('improvement-plan-list', plan, false);
+}
+
 function showResults(grading) {
+  latestGrading = grading;
   showScreen('results-screen');
   setBusy(false);
   window.scrollTo({ top: 0, behavior: 'smooth' });
   document.getElementById('results-screen').scrollTop = 0;
 
-  const score = grading.overall_score || 0;
-  const grade = grading.grade || 'C';
-  const gradeLabel = grading.grade_label || 'Adequate';
+  const score = grading?.overall_score || 0;
+  const grade = grading?.grade || 'C';
+  const gradeLabel = grading?.grade_label || 'Adequate';
   const gradeColors = { A: '#4ade80', B: '#c8a96e', C: '#fbbf24', D: '#f87171' };
   const color = gradeColors[grade] || '#c8a96e';
 
@@ -685,7 +1450,7 @@ function showResults(grading) {
     'Problem Solving': '#f472b6'
   };
 
-  Object.entries(grading.categories || {}).forEach(([name, value]) => {
+  Object.entries(grading?.categories || {}).forEach(([name, value]) => {
     const c = catColors[name] || '#c8a96e';
     const card = document.createElement('div');
     card.className = 'cat-card';
@@ -698,31 +1463,283 @@ function showResults(grading) {
     catGrid.appendChild(card);
   });
 
-  document.getElementById('summary-text').textContent = grading.summary || '';
+  document.getElementById('summary-text').textContent = grading?.summary || '';
 
-  const fillList = (id, items) => {
-    const el = document.getElementById(id);
-    el.innerHTML = '';
-    (items || []).forEach(item => {
-      const li = document.createElement('li');
-      li.textContent = item;
-      el.appendChild(li);
-    });
-  };
+  fillList('strengths-list', grading?.strengths || []);
+  fillList('improvements-list', grading?.improvements || []);
+  fillList('tips-list', grading?.tips || []);
 
-  fillList('strengths-list', grading.strengths);
-  fillList('improvements-list', grading.improvements);
-  fillList('tips-list', grading.tips);
+  updateWeakestAreaCoach(grading || { categories: {} });
+  updateResourcesAndPlan(grading || { categories: {} });
+}
+
+function safeReportValue(value) {
+  if (value === undefined || value === null || value === '') return 'N/A';
+  return String(value);
+}
+
+function listToLines(items) {
+  if (!items || !items.length) return '- N/A';
+  return items.map(item => `- ${item}`).join('\n');
+}
+
+function downloadReportCard() {
+  if (!latestGrading) {
+    alert('No interview results are available to download yet.');
+    return;
+  }
+
+  const categories = latestGrading.categories || {};
+  const candidate = state.candidateName || document.getElementById('candidate-name').value.trim() || 'Candidate';
+  const generatedDate = new Date().toLocaleString();
+  const weakest = getWeakestCategory(categories);
+  const weakestName = weakest?.name || 'Communication';
+  const resources = recommendedResources[weakestName] || [];
+  const plan = improvementPlans[weakestName] || [];
+
+  const report = `
+InterviewIQ Report Card
+=======================
+
+Generated: ${generatedDate}
+
+Candidate: ${candidate}
+Role: ${safeReportValue(state.jobTitle)}
+Industry: ${safeReportValue(state.industry)}
+Difficulty: ${safeReportValue(state.difficulty)}
+Questions: ${safeReportValue(state.numQuestions)}
+
+Resume Uploaded: ${state.resumeFilename ? 'Yes' : 'No'}
+Resume File: ${safeReportValue(state.resumeFilename)}
+
+Overall Result
+--------------
+Overall Score: ${safeReportValue(latestGrading.overall_score)}/100
+Grade: ${safeReportValue(latestGrading.grade)} — ${safeReportValue(latestGrading.grade_label)}
+
+Category Scores
+---------------
+Communication: ${safeReportValue(categories.Communication)}/100
+Relevance: ${safeReportValue(categories.Relevance)}/100
+Depth: ${safeReportValue(categories.Depth)}/100
+Confidence: ${safeReportValue(categories.Confidence)}/100
+Problem Solving: ${safeReportValue(categories['Problem Solving'])}/100
+
+Weakest Area Coach
+------------------
+Recommended Practice Area: ${safeReportValue(weakest?.name)}
+Lowest Category Score: ${safeReportValue(weakest?.score)}/100
+
+Overall Summary
+---------------
+${safeReportValue(latestGrading.summary)}
+
+Strengths
+---------
+${listToLines(latestGrading.strengths)}
+
+Areas for Improvement
+---------------------
+${listToLines(latestGrading.improvements)}
+
+Actionable Tips
+---------------
+${listToLines(latestGrading.tips)}
+
+Recommended Resources
+---------------------
+${listToLines(resources)}
+
+Personalized Improvement Plan
+-----------------------------
+${listToLines(plan)}
+`.trim();
+
+  const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const safeRole = (state.jobTitle || 'Interview').replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_');
+  const a = document.createElement('a');
+
+  a.href = url;
+  a.download = `InterviewIQ_Report_Card_${safeRole}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
+}
+
+function formatDateTime(value) {
+  if (!value) return 'Unknown time';
+  const dt = new Date(value);
+  if (Number.isNaN(dt.getTime())) return value;
+  return dt.toLocaleString();
+}
+
+function restoreConversation(conversation) {
+  const chat = document.getElementById('chat-area');
+  chat.innerHTML = '';
+
+  (conversation || []).forEach(message => {
+    const role = message.role === 'model' ? 'assistant' : 'user';
+    addMessage(role, message.text || '');
+  });
+}
+
+function restoreInterviewSession(session) {
+  state.sessionId = session.sessionId;
+  state.candidateName = session.candidateName || '';
+  state.jobTitle = session.jobTitle || '';
+  state.industry = session.industry || '';
+  state.difficulty = session.difficulty || '';
+  state.numQuestions = Number(session.numQuestions || 5);
+  state.questionCount = Number(session.questionCount || 0);
+  state.resumeFilename = session.resumeFilename || '';
+
+  document.getElementById('interview-meta').textContent = session.meta || [state.candidateName, state.jobTitle, state.industry, state.difficulty].filter(Boolean).join(' · ');
+  buildProgressDots();
+  updateProgress(state.questionCount);
+  restoreConversation(session.conversation || []);
+  showScreen('interview-screen');
+  document.getElementById('user-input').focus();
+}
+
+async function openHistorySession(sessionId) {
+  try {
+    const data = await apiGet(`/api/history/${encodeURIComponent(sessionId)}`);
+    const session = data.session;
+
+    state.candidateName = session.candidateName || '';
+    state.jobTitle = session.jobTitle || '';
+    state.industry = session.industry || '';
+    state.difficulty = session.difficulty || '';
+    state.numQuestions = Number(session.numQuestions || 5);
+    state.resumeFilename = session.resumeFilename || '';
+
+    if (session.complete) {
+      state.sessionId = session.sessionId;
+      showResults(session.grading || {});
+    } else {
+      restoreInterviewSession(session);
+    }
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function makeHistoryCard(item) {
+  const card = document.createElement('div');
+  card.className = 'history-card';
+
+  const top = document.createElement('div');
+  top.className = 'history-card-top';
+
+  const left = document.createElement('div');
+  const title = document.createElement('div');
+  title.className = 'history-title';
+  title.textContent = item.jobTitle || 'Untitled Interview';
+
+  const meta = document.createElement('div');
+  meta.className = 'history-meta';
+  meta.innerHTML = `
+    ${item.difficulty || 'Unknown'} · ${item.industry || 'Unknown'}<br>
+    Updated: ${formatDateTime(item.updatedAt)}
+  `;
+
+  left.appendChild(title);
+  left.appendChild(meta);
+
+  const status = document.createElement('div');
+  status.className = `history-status ${item.complete ? 'status-complete' : 'status-inprogress'}`;
+  status.textContent = item.complete ? 'Completed' : 'In Progress';
+
+  top.appendChild(left);
+  top.appendChild(status);
+
+  const chips = document.createElement('div');
+  chips.className = 'history-chips';
+
+  const chipValues = [
+    item.grade ? `Grade ${item.grade}` : null,
+    item.overallScore !== null && item.overallScore !== undefined ? `Score ${item.overallScore}` : null,
+    `${item.answersReceived || 0}/${item.numQuestions || 0} Answers`,
+    item.weakestArea ? `Weakest ${item.weakestArea}` : null,
+    item.resumeUploaded ? 'Resume Uploaded' : null
+  ].filter(Boolean);
+
+  chipValues.forEach(value => {
+    const chip = document.createElement('div');
+    chip.className = 'history-chip';
+    chip.textContent = value;
+    chips.appendChild(chip);
+  });
+
+  const actions = document.createElement('div');
+  actions.className = 'history-actions';
+
+  const openBtn = document.createElement('button');
+  openBtn.className = item.complete ? 'btn-secondary' : 'btn-primary';
+  openBtn.textContent = item.complete ? 'View Results' : 'Resume Interview';
+  openBtn.addEventListener('click', () => openHistorySession(item.sessionId));
+  actions.appendChild(openBtn);
+
+  card.appendChild(top);
+  card.appendChild(chips);
+  card.appendChild(actions);
+  return card;
+}
+
+function renderHistory(items) {
+  const container = document.getElementById('history-list');
+  container.innerHTML = '';
+
+  if (!items || !items.length) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-history';
+    empty.textContent = 'No saved interviews yet. Start one from the setup page and it will appear here.';
+    container.appendChild(empty);
+    return;
+  }
+
+  items.forEach(item => container.appendChild(makeHistoryCard(item)));
+}
+
+async function openHistoryScreen() {
+  try {
+    const data = await apiGet('/api/history');
+    renderHistory(data.items || []);
+    showScreen('history-screen');
+  } catch (err) {
+    alert(err.message);
+  }
 }
 
 function restartInterview() {
+  latestGrading = null;
   state.sessionId = null;
   state.candidateName = '';
   state.questionCount = 0;
+  state.resumeText = '';
+  state.resumeFilename = '';
   document.getElementById('candidate-name').value = '';
   document.getElementById('job-title').value = '';
   document.getElementById('focus-area').value = '';
   document.getElementById('user-input').value = '';
+
+  const resumeFile = document.getElementById('resume-file');
+  const resumeStatus = document.getElementById('resume-status');
+  if (resumeFile) resumeFile.value = '';
+  if (resumeStatus) {
+    resumeStatus.style.display = 'none';
+    resumeStatus.textContent = '';
+  }
+
+  const drillBox = document.getElementById('practice-drill-box');
+  if (drillBox) {
+    drillBox.classList.remove('active');
+    drillBox.innerHTML = '';
+  }
+
   clearError();
   showScreen('setup-screen');
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -734,8 +1751,13 @@ function autoResize(el) {
 }
 
 document.getElementById('start-btn').addEventListener('click', startInterview);
+document.getElementById('history-btn').addEventListener('click', openHistoryScreen);
+document.getElementById('back-from-history-btn').addEventListener('click', () => showScreen('setup-screen'));
+document.getElementById('upload-resume-btn').addEventListener('click', uploadResume);
 document.getElementById('send-btn').addEventListener('click', sendMessage);
 document.getElementById('end-btn').addEventListener('click', endInterviewEarly);
+document.getElementById('download-report-btn').addEventListener('click', downloadReportCard);
+document.getElementById('practice-drill-btn').addEventListener('click', showPracticeDrill);
 document.getElementById('restart-btn').addEventListener('click', restartInterview);
 document.getElementById('user-input').addEventListener('input', (e) => autoResize(e.target));
 document.getElementById('user-input').addEventListener('keydown', (e) => {
